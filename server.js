@@ -414,6 +414,33 @@ client.on("messageCreate", async (message) => {
     await message.channel.send({content: sticky.message})
   }
   //
+  let backupVouch = {
+    original: '1267977401162268752',
+    backup: 'none',
+    format: '1276727389195599904',
+    condition: function(msg) { return true }
+  }
+  if (message.channel.id == "1272480393185984584" && backupVouch.condition(message)) {
+    let templates = null
+    let tempMsg = null
+    if (backupVouch.format) {
+      templates = await getChannel(shop.channels.templates)
+      tempMsg = await templates.messages.fetch(backupVouch.format)
+    }
+    //
+    let attachments = Array.from(message.attachments.values())
+    let webhook = new WebhookClient({ url: backupVouch.backup})
+    let files = []
+
+    for (let i in attachments) { files.push(attachments[i].url) }
+
+    webhook.send({
+      content: tempMsg ? tempMsg.content.replace('{user}',message.author.toString()).replace('{message}',message.content) : message.content+'\n\n'+message.author.toString(),
+      username: message.author.tag,
+      avatarURL: message.author.avatarURL(),
+      files: files,
+    })
+  }
   //
   if (message.content.includes('397587935647629334')) {
     let template = await getChannel(shop.channels.templates)
@@ -779,7 +806,6 @@ client.on("interactionCreate", async (inter) => {
           ]),
         )
         await orders.send({content: content, components: [row]}).then(async msg => {
-          await msg.react('<a:PinkDice:1131891214279524372>')
           msgUrl = msg.url
         })
         
@@ -1042,9 +1068,9 @@ const interval = setInterval(async function() {
     let guild = await getGuild(shop.guild)
     let channel = await getChannel('1')
         
-    if (time === '30:0PM') {
+    if (time === '8:0AM') {
       ready = false
-      let msg = await template.messages.fetch("1131863357083881522")
+      let msg = await template.messages.fetch("1270604673744896042")
       channel.send({content: msg.content})
     }
   }
