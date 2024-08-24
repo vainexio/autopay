@@ -50,6 +50,57 @@ module.exports = {
       type: 1,
       description: 'Show all embed messages',
     },
+    {
+      "name": "order",
+      "type": 1,
+      "description": "Sends an order queue",
+      "options": [
+        {
+          "name": 'user',
+          "description": 'Recipient',
+          "type": 6,
+          "required": true,
+        },
+        {
+          "name": 'product',
+          "description": 'Product name',
+          "type": 3,
+          "required": true,
+        },
+        {
+          "name": 'quantity',
+          "description": 'Amount ordered',
+          "type": 3,
+          "required": true,
+        },
+        {
+          "name": 'mop',
+          "description": 'Mode of Payment',
+          "type": 3,
+          "choices": [
+            {
+              name: 'GCash',
+              value: 'gcash'
+            },
+            {
+              name: 'Robux',
+              value: 'robux'
+            },
+            {
+              name: 'Paypal',
+              value: 'paypal'
+            },
+          ],
+          "required": true,
+        },
+        {
+          "name": 'price',
+          "description": 'Price paid',
+          "type": 4,
+          "required": true,
+        },
+      ]
+    },
     /*{
       name: "drop",
       type: 1,

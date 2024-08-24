@@ -100,7 +100,12 @@ client.on("ready", async () => {
       }
   }
   console.log("Successfully logged in to discord bot.");
-  client.user.setPresence(shop.bot.status);
+  let statusInterval = 0
+  setInterval(async function() {
+    client.user.setPresence(shop.bot.status[statusInterval]);
+    statusInterval++
+    statusInterval === shop.bot.status.length ? statusInterval = 0 : null
+  },10000)
 });
 
 module.exports = { client: client, getPerms, noPerms };
@@ -409,7 +414,14 @@ client.on("messageCreate", async (message) => {
     await message.channel.send({content: sticky.message})
   }
   //
-  let ar = shop.ar.responders.find(r => message.content.toLowerCase().startsWith(r.trigger))
+  //
+  if (message.content.includes('397587935647629334')) {
+    let template = await getChannel(shop.channels.templates)
+    let msg = await template.messages.fetch('1270604575325552660')
+    
+    await message.reply(msg.content)
+  }
+  let ar = shop.ar.responders.find(r => message.content.toLowerCase().includes(r.trigger))
   if (ar) {
     if (ar.autoDelete) message.delete();
     let content = null
@@ -437,6 +449,15 @@ client.on("messageCreate", async (message) => {
 let yay = true
 let cStocks = 0
 let tStocks = 0
+
+client.on('guildMemberAdd', async member => {
+  let template = await getChannel(shop.channels.templates)
+  let msg = await template.messages.fetch('1270604608066031662')
+  let welcome = await getChannel('1270604387374334087')
+  msg.content = msg.content.replace('{user}',member.user.toString())
+  await welcome.send(msg.content)
+  await member.user.send(msg.content)
+});
 
 client.on("interactionCreate", async (inter) => {
   if (inter.isCommand()) {
@@ -742,14 +763,22 @@ client.on("interactionCreate", async (inter) => {
         content = content
           .replace('{user}',user.user.toString())
           .replace('{ticket}',ticket.channel.toString())
-          .replace('{quan}',quan.value.toString())
+          .replace('{quantity}',quan.value.toString())
           .replace('{product}',item.value)
           .replace('{mop}',mop ? mop.value : 'gcash')
           .replace('{price}',price.toString())
         
         let msgUrl
         let member = await getMember(user.user.id,inter.guild)
-        await orders.send({content: content}).then(async msg => {
+        let row = new MessageActionRow().addComponents(
+          new MessageSelectMenu().setCustomId('orderStatus').setPlaceholder('Update Order Status').addOptions([
+            {label: 'Noted',description: 'Change Order Status',value: 'noted', emoji: '<:priv:1272475872921649162>'},
+            {label: 'Processing',description: 'Change Order Status',value: 'processing', emoji: '<:megap:1272890445541802116>'},
+            {label: 'Completed',description: 'Change Order Status',value: 'completed', emoji: '<:rules:1272890463409668127>'},
+            {label: 'Cancelled',description: 'Change Order Status',value: 'cancelled', emoji: '<:lock:1272475852419891200>'},
+          ]),
+        )
+        await orders.send({content: content, components: [row]}).then(async msg => {
           await msg.react('<a:PinkDice:1131891214279524372>')
           msgUrl = msg.url
         })
