@@ -442,7 +442,7 @@ client.on("messageCreate", async (message) => {
     })
   }
   //
-  if (message.content.includes('397587935647629334')) {
+  if (message.content.includes('397587935647629334') && message.channel.id == "1180344563576098879") {
     let template = await getChannel(shop.channels.templates)
     let msg = await template.messages.fetch('1270604575325552660')
     
@@ -480,7 +480,7 @@ let tStocks = 0
 client.on('guildMemberAdd', async member => {
   let template = await getChannel(shop.channels.templates)
   let msg = await template.messages.fetch('1270604608066031662')
-  let welcome = await getChannel('1270604387374334087')
+  let welcome = await getChannel('1180344563576098879')
   msg.content = msg.content.replace('{user}',member.user.toString())
   await welcome.send(msg.content)
   await member.user.send(msg.content)
