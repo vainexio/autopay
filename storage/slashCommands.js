@@ -12,7 +12,7 @@ NUMBER - 10
 ATTACHMENT - 11
 */
 module.exports = {
-  register: false,
+  register: true,
   deleteSlashes: [],
   slashes: [
     {
@@ -51,7 +51,7 @@ module.exports = {
       description: 'Show all embed messages',
     },
     {
-      "name": "order",
+      "name": "queue",
       "type": 1,
       "description": "Sends an order queue",
       "options": [
