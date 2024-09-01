@@ -339,7 +339,7 @@ client.on("messageCreate", async (message) => {
   }
   
   //
-  if (message.content.startsWith('.codes')) {
+  /*if (message.content.startsWith('.codes')) {
     if (!await getPerms(message.member, 4)) return message.reply({ content: emojis.warning + ' Insufficient Permission' });
     let args = await getArgs(message.content)
     if (args.length < 2) return;
@@ -468,13 +468,13 @@ client.on("messageCreate", async (message) => {
     } catch (err) {
       message.reply(emojis.warning+" An unexpected error occured.\n```diff\n- "+err+"```")
     }
- }
+ }*/
   else if (message.content.startsWith('.generate')) {
     if (!await getPerms(message.member,4)) return message.reply({content: emojis.warning+' Insufficient Permission'});
     message.content = message.content.replace('.generate','')
     let args = await getArgs(message.content)
     if (args.length === 0) return;
-    let acc = process.env[args[0]]
+    let acc = process.env["Acc"]//process.env[args[0]]
     if (!acc) return message.reply(emojis.warning+" Invalid account keyword ` "+args[0]+" `.")
     await message.react(emojis.loading)
     let amount = Number(args[1])
