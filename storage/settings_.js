@@ -51,13 +51,13 @@ module.exports = {
         {
           status: "idle", //online, idle, dnd
           activities: [
-            { name: ".gg/NvA64ZMz7q", type: "Watching".toUpperCase(), //playing, watching, listening only
+            { name: "u", type: "Watching".toUpperCase(), //playing, watching, listening only
             }, ], 
         },
         {
           status: "idle", //online, idle, dnd
           activities: [
-            { name: "#join us! active ・gaming ・non-toxic・socializing", type: "Watching".toUpperCase(), //playing, watching, listening only
+            { name: "u", type: "Watching".toUpperCase(), //playing, watching, listening only
             }, ], 
         },
       ]
