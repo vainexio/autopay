@@ -12,95 +12,9 @@ NUMBER - 10
 ATTACHMENT - 11
 */
 module.exports = {
-  register: true,
+  register: false,
   deleteSlashes: [],
   slashes: [
-    {
-      name: 'embed',
-      type: 1,
-      description: 'Create an embed message',
-      options: [
-        { name: 'id', type: 3, description: 'ID of the embed', required: true },
-        { name: 'description', type: 3, description: 'Description of the embed', required: true },
-        { name: 'title', type: 3, description: 'Title of the embed', required: false },
-        { name: 'color', type: 3, description: 'Color of the embed in HEX', required: false },
-        { name: 'thumbnail', type: 3, description: 'Thumbnail URL', required: false },
-        { name: 'image', type: 3, description: 'Image URL', required: false },
-        { name: 'footer', type: 3, description: 'Footer text', required: false }
-      ]
-    },
-    {
-      name: 'display_embed',
-      type: 1,
-      description: 'Display an embed message',
-      options: [
-        { name: 'id', type: 3, description: 'ID of the embed', required: true },
-      ]
-    },
-    {
-      name: 'delete_embed',
-      type: 1,
-      description: 'Delete an embed message',
-      options: [
-        { name: 'id', type: 3, description: 'ID of the embed', required: true },
-      ]
-    },
-    {
-      name: 'show_embeds',
-      type: 1,
-      description: 'Show all embed messages',
-    },
-    {
-      "name": "queue",
-      "type": 1,
-      "description": "Sends an order queue",
-      "options": [
-        {
-          "name": 'user',
-          "description": 'Recipient',
-          "type": 6,
-          "required": true,
-        },
-        {
-          "name": 'product',
-          "description": 'Product name',
-          "type": 3,
-          "required": true,
-        },
-        {
-          "name": 'quantity',
-          "description": 'Amount ordered',
-          "type": 3,
-          "required": true,
-        },
-        {
-          "name": 'mop',
-          "description": 'Mode of Payment',
-          "type": 3,
-          "choices": [
-            {
-              name: 'GCash',
-              value: 'gcash'
-            },
-            {
-              name: 'Robux',
-              value: 'robux'
-            },
-            {
-              name: 'Paypal',
-              value: 'paypal'
-            },
-          ],
-          "required": true,
-        },
-        {
-          "name": 'price',
-          "description": 'Price paid',
-          "type": 4,
-          "required": true,
-        },
-      ]
-    },
     /*{
       name: "drop",
       type: 1,
