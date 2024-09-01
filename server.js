@@ -5,10 +5,19 @@ const app = express();
 const fetch = require("node-fetch");
 const mongoose = require("mongoose");
 const moment = require("moment");
-const cc = 'KJ0UUFNHWBJSE-WE4GFT-W4VG'
 //Discord
 const Discord = require("discord.js");
-const { WebhookClient, Permissions, Client, Intents, MessageEmbed, MessageActionRow, MessageButton, MessageSelectMenu, } = Discord;
+const {
+  WebhookClient,
+  Permissions,
+  Client,
+  Intents,
+  MessageEmbed,
+  MessageActionRow,
+  MessageButton,
+  MessageSelectMenu,
+} = Discord;
+
 const myIntents = new Intents();
 myIntents.add(
   Intents.FLAGS.GUILD_PRESENCES,
@@ -24,91 +33,52 @@ const client = new Client({ intents: myIntents, partials: ["CHANNEL"] });
 
 //Env
 const token = process.env.SECRET;
-const mongooseToken = process.env.MONGOOSE;
-let listen
 
 async function startApp() {
+  let promise = client.login(token);
   console.log("Starting...");
-  if (cc !== process.env.CC) console.log(listen), process.exit(1);
-  let promise = client.login(token)
-  promise?.catch(function (error) {
+  promise.catch(function (error) {
     console.error("Discord bot login | " + error);
     process.exit(1);
   });
 }
 startApp();
-
-let embedSchema
-let embedModel
-
-let stickySchema
-let stickyModel
-
-client.on("debug", (x) => {
-  //console.log(x)
-})
 //When bot is ready
 client.on("ready", async () => {
-  console.log(client.user.id)
-  await mongoose.connect(mongooseToken);
-  
-  stickySchema = new mongoose.Schema({
-    channelId: String,
-    message: String,
-  })
-  
-  embedSchema = new mongoose.Schema({
-    id: String,
-    title: String,
-    description: String,
-    color: String,
-    thumbnail: String,
-    image: String,
-    footer: String,
-    fields: [{
-        name: String,
-        value: String
-    }]
-  });
-  
-  embedModel = mongoose.model('Pau Embed', embedSchema);
-  stickyModel = mongoose.model("Pau Sticky", stickySchema);
-  
   if (slashCmd.register) {
-    let discordUrl = "https://discord.com/api/v10/applications/"+client.user.id+"/commands"
-    let headers = {
-      "Authorization": "Bot "+token,
-      "Content-Type": 'application/json'
-    }
-    for (let i in slashes) {
-      let json = slashes[i]
-      await sleep(1000)
-      let response = await fetch(discordUrl, {
-        method: 'post',
-        body: JSON.stringify(json),
-        headers: headers
-      });
-      console.log(json.name+' - '+response.status)
-    }
+  let discordUrl = "https://discord.com/api/v10/applications/"+client.user.id+"/commands"
+  let headers = {
+    "Authorization": "Bot "+token,
+    "Content-Type": 'application/json'
+  }
+  for (let i in slashes) {
+    let json = slashes[i]
+    let response = await fetch(discordUrl, {
+      method: 'post',
+      body: JSON.stringify(json),
+      headers: headers
+    });
+    response = await response.json();
+    //console.log(response)
+  }
     for (let i in slashCmd.deleteSlashes) {
       let deleteUrl = "https://discord.com/api/v10/applications/"+client.user.id+"/commands/"+slashCmd.deleteSlashes[i]
       let deleteRes = await fetch(deleteUrl, {
         method: 'delete',
         headers: headers
       })
-      console.log('Delete - '+deleteRes.status)
-      }
+      //console.log(deleteRes)
+    }
   }
   console.log("Successfully logged in to discord bot.");
-  let statusInterval = 0
-  setInterval(async function() {
-    client.user.setPresence(shop.bot.status[statusInterval]);
-    statusInterval++
-    statusInterval === shop.bot.status.length ? statusInterval = 0 : null
-  },10000)
+  client.user.setPresence(shop.bot.status);
 });
 
-module.exports = { client: client, getPerms, noPerms };
+module.exports = {
+  client: client,
+  getPerms,
+  noPerms,
+};
 
 let listener = app.listen(process.env.PORT, function () {
   console.log("Not that it matters but your app is listening on port " +listener.address().port);
@@ -117,6 +87,9 @@ let listener = app.listen(process.env.PORT, function () {
 //Settings
 const settings = require("./storage/settings_.js");
 const { prefix, shop, colors, theme, commands, permissions, emojis } = settings;
+//Send Messages
+const sendMsg = require("./functions/sendMessage.js");
+const { safeSend, sendChannel, sendUser } = sendMsg;
 //Functions
 const get = require("./functions/get.js");
 const { getNth, getChannel, getGuild, getUser, getMember, getRandom, getColor } = get;
@@ -132,6 +105,9 @@ const { getRole, addRole, removeRole, hasRole } = roles;
 //Slash Commands
 const slashCmd = require("./storage/slashCommands.js");
 const { slashes } = slashCmd;
+//Links Handler
+const linksHandler = require('./functions/linksHandler.js')
+const { generateLinks, revokeLinks, fetchLinks} = linksHandler
 /*
 ██████╗░███████╗██████╗░███╗░░░███╗░██████╗
 ██╔══██╗██╔════╝██╔══██╗████╗░████║██╔════╝
@@ -169,7 +145,6 @@ function noPerms(message) {
     .setDescription("You lack special permissions to use this command.");
   return Embed;
 }
-
 /*
 ░█████╗░██╗░░░░░██╗███████╗███╗░░██╗████████╗  ███╗░░░███╗███████╗░██████╗░██████╗░█████╗░░██████╗░███████╗
 ██╔══██╗██║░░░░░██║██╔════╝████╗░██║╚══██╔══╝  ████╗░████║██╔════╝██╔════╝██╔════╝██╔══██╗██╔════╝░██╔════╝
@@ -180,25 +155,23 @@ function noPerms(message) {
 //ON CLIENT MESSAGE
 let errors = 0;
 let expCodes = [];
-let nitroCodes = []
+let nitroCodes = [];
 client.on("messageCreate", async (message) => {
   //
-  if (message.author.bot) return;
-  //Checker
-  let checkerVersion = 'Checker version 2.9'
-  if (message.channel?.name?.includes('nitro-checker')) {
+  if (message.channel.type === "DM" || message.author.bot) return;
+  let checkerVersion = 'Checker version 2.8324sc'
+  if (message.channel.id === shop.channels.checker) {
     let args = getArgs(message.content)
     if (args.length === 0) return;
-    let addStocks = args[0].toLowerCase() === 'stocks' && message.channel.type !== 'DM'  ? true : false
-    let sortLinks = args[1]?.toLowerCase() === 'sort' && addStocks && message.channel.type !== 'DM'  ? true : args[0]?.toLowerCase() === 'sort' ? true : false
-    if (shop.checkers.length > 0) return message.reply(emojis.warning+' Someone is currently scanning links.\nPlease use the checker one at a time to prevent rate limitation.')
-    
+    let addStocks = args[0].toLowerCase() === 'stocks' ? true : false
+    let sortLinks = args[1]?.toLowerCase() === 'sort' && addStocks ? true : args[0]?.toLowerCase() === 'sort' ? true : false
+    //if (shop.checkers.length > 0) return message.reply(emojis.warning+' Someone is currently scanning links.\nPlease use the checker one at a time to prevent rate limitation.')
     let codes = []
     let text = ''
     let msg = null
     for (let i in args) {
-      if (args[i].toLowerCase().includes('discord.gift') || args[i].toLowerCase().includes('discord.com/gifts')) {
-      let code = args[i].replace(/https:|discord.com\/gifts|discord.gift|\/|/g,'').replace(/ /g,'').replace(/[^\w\s]/gi,'').replace(/\\n|\|'|"/g,'')
+      if (args[i].toLowerCase().includes('discord.gift')) {
+      let code = args[i].replace(/https:|discord.gift|\/|/g,'').replace(/ /g,'').replace(/\|/g,'')
       let found = codes.find(c => c.code === code)
       !found ? codes.push({code: code, expire: null, emoji: null, user: null, state: null}) : null
     }
@@ -257,7 +230,7 @@ client.on("messageCreate", async (message) => {
           let e2 = res.expires_at ? moment(res.expires_at).unix() : null;
           codes[i].expireUnix = e2 ? "\n<t:"+e2+":f>" : '';
           codes[i].rawExpire = e2
-          codes[i].expire = diffDuration ? diffDuration.asHours().toFixed(1) : null
+          codes[i].expire = diffDuration ? Math.floor(diffDuration.asHours()) : null
           codes[i].emoji = res.uses === 0 ? emojis.check : res.expires_at ? emojis.x : emojis.warning
           codes[i].state = res.expires_at && res.uses === 0 ? 'Claimable' : res.expires_at ? 'Claimed' : 'Invalid'
           codes[i].user = res.user ? '`'+res.user.username+'#'+res.user.discriminator+'`' : "`Unknown User`"
@@ -267,7 +240,6 @@ client.on("messageCreate", async (message) => {
           if (!foundCode) nitroCodes.push({code: res.code, type: type})
           foundCode ? type = foundCode.type : null
           codes[i].typeEmoji = type === 'Nitro' ? emojis.nboost : type === 'Nitro Basic' ? emojis.nbasic : type === 'Nitro Classic' ? emojis.nclassic : '❓' 
-          codes[i].type = type
           if ((!res.expires_at || res.uses >= 1) && !eCode) {
             let data = {
               code: codes[i].code,
@@ -290,12 +262,11 @@ client.on("messageCreate", async (message) => {
     sortLinks ? codes.sort((a, b) => (b.rawExpire - a.rawExpire)) : null
     let embeds = []
     let embed = new MessageEmbed()
-    .setColor(colors.yellow)
-    
+    .setColor(colors.none)
     let num = 0
     let stat = {
-      put: { boost: 0, basic: 0, boostString: '', basicString: '' },
-      notput: { count: 0, string: '' }
+      put: { count: 0, string: ''},
+      notput: { count: 0, string: ''}
     }
     for (let i in codes) {
       num++
@@ -315,32 +286,24 @@ client.on("messageCreate", async (message) => {
       else {
         embeds.push(embed)
         embed = new MessageEmbed()
-          .setColor(colors.yellow)
+          .setColor(colors.none)
           .setFooter({ text: checkerVersion})
         if (codes.length === num) embeds.push(embed);
       }
       embed.addFields({
-        name: num+". ||discord.gift/"+codes[i].code+"||", 
+        name: num+". ||https://discord.gift/"+codes[i].code+"||", 
         value: emoji+' **'+state+'**\n'+(!expire ? '`Expired`' : codes[i].typeEmoji+' Expires in `'+expire+' hours`')+expireUnix+'\n'+user+'\u200b',
         inline: true,
       })
       ////
       if (addStocks && codes[i].state === 'Claimable') {
-        let stocks = null
-        if (type === 'Nitro') {
-          stat.put.boost++
-          stat.put.boostString += "\ndiscord.gift/"+codes[i].code
-          stocks = await getChannel(shop.channels.boostStocks)
-        } 
-        else {
-          stat.put.basic++
-          stat.put.basicString += "\ndiscord.gift/"+codes[i].code
-          stocks = await getChannel(shop.channels.basicStocks)
-        }
-        await stocks.send('discord.gift/'+codes[i].code)
+        stat.put.count++
+        stat.put.string += "\nhttps://discord.gift/"+codes[i].code
+        let stocks = await getChannel(shop.channels.stocks)
+        await stocks.send("https://discord.gift/"+codes[i].code)
       } else {
         stat.notput.count++
-        stat.notput.string += "\ndiscord.gift/"+codes[i].code
+        stat.notput.string += "\nhttps://discord.gift/"+codes[i].code
       }
     }
     msg.delete();
@@ -358,118 +321,167 @@ client.on("messageCreate", async (message) => {
     if (addStocks) {
       let newEmbed = new MessageEmbed();
       newEmbed.addFields(
-        { name: 'Stocked NBoost', value: stat.put.boost > 20 ? stat.put.boost.toString() : stat.put.boost >= 1 ? '|| '+stat.put.boostString.replace('\n','')+' ||' : 'None' },
-        { name: 'Stocked NBasic', value: stat.put.basic > 20 ? stat.put.basic.toString() : stat.put.basic >= 1 ? '|| '+stat.put.basicString.replace('\n','')+' ||' : 'None' },
-        { name: 'Not Stocked', value: stat.notput.count > 20 ? stat.notput.count.toString() : stat.notput.count >= 1 ? '|| '+stat.notput.string.replace('\n','')+' ||' : 'None' },
+        { name: 'Stocked Links', value: stat.put.count > 20 ? stat.put.count.toString() : stat.put.count >= 1 ? stat.put.string : 'None' },
+        { name: 'Not Stocked', value: stat.notput.count > 20 ? stat.notput.count.toString() : stat.notput.count >= 1 ? stat.notput.string : 'None' },
       )
-      newEmbed.setColor(colors.yellow)
+      newEmbed.setColor(stat.notput.count > 0 ? colors.red : colors.lime)
       message.channel.send({embeds: [newEmbed]})
     }
     shop.checkers = []
-    !message.channel.type === 'DM' ? message.delete() : null
   }
-  else if (message.content.toLowerCase().startsWith('.eval')) {
-    let expression = message.content.toLowerCase().replace('.eval','')
-    try {
-      let total = eval(expression)
-      message.reply(total.toString())
-    } catch (err) {
-      console.log(err)
-    }
-  }
-  else if (isCommand('sticky',message)) {
+  else if (isCommand('find',message)) { 
     if (!await getPerms(message.member,4)) return message.reply({content: emojis.warning+' Insufficient Permission'});
-      let args = await requireArgs(message,1)
-      let sticky = await stickyModel.findOne({channelId: message.channel.id})
-      if (sticky) return message.reply(emojis.warning+" You can only set 1 sticky per channel.")
-      let doc = new stickyModel(stickySchema)
-      doc.channelId = message.channel.id
-      doc.message = message.content.replace(args[0]+" ",'')
-      await doc.save();
-      await message.react(emojis.check)
-  }
-  else if (isCommand('unsticky',message)) {
-    if (!await getPerms(message.member,4)) return message.reply({content: emojis.warning+' Insufficient Permission'});
-    let sticky = await stickyModel.findOne({channelId: message.channel.id})
-    if (sticky) {
-      await stickyModel.deleteOne({channelId: message.channel.id})
-      message.reply(emojis.check+" I removed the sticky on this channel.")
-    } else {
-      message.reply(emojis.x+" This channel has no sticky :c")
-    }
-  }
-  if (message.channel.type === "DM") return;
-  //Sticky
-  let sticky = stickyModel ? await stickyModel.findOne({channelId: message.channel.id}) : null
-  if (sticky) {
-    let messages = await message.channel.messages.fetch({ limit: 10 }).then(messages => {
-      messages.forEach(async (gotMsg) => {
-        console.log(gotMsg.content,sticky.message)
-        if (gotMsg.author.id === client.user.id && gotMsg.content === sticky.message) {
-          await gotMsg.delete();
-          //
-        }
-      })
-    });
-    await message.channel.send({content: sticky.message})
-  }
-  //
-  let backupVouch = {
-    original: '1267977401162268752',
-    backup: 'none',
-    format: '1276727389195599904',
-    condition: function(msg) { return true }
-  }
-  if (message.channel.id == "1272480393185984584" && backupVouch.condition(message)) {
-    let templates = null
-    let tempMsg = null
-    if (backupVouch.format) {
-      templates = await getChannel(shop.channels.templates)
-      tempMsg = await templates.messages.fetch(backupVouch.format)
-    }
-    //
-    let attachments = Array.from(message.attachments.values())
-    let webhook = new WebhookClient({ url: backupVouch.backup})
-    let files = []
-
-    for (let i in attachments) { files.push(attachments[i].url) }
-
-    webhook.send({
-      content: tempMsg ? tempMsg.content.replace('{user}',message.author.toString()).replace('{message}',message.content) : message.content+'\n\n'+message.author.toString(),
-      username: message.author.tag,
-      avatarURL: message.author.avatarURL(),
-      files: files,
-    })
-  }
-  //
-  if (message.content.includes('397587935647629334') && message.channel.id == "1180344563576098879") {
-    let template = await getChannel(shop.channels.templates)
-    let msg = await template.messages.fetch('1270604575325552660')
+    let args = await requireArgs(message,1)
+    if (!args) return;
     
-    await message.reply(msg.content)
+    let drops = await getChannel(shop.channels.drops)
+    await fetchKey(drops,args[1],message)
   }
-  let ar = shop.ar.responders.find(r => message.content.toLowerCase().includes(r.trigger))
-  if (ar) {
-    if (ar.autoDelete) message.delete();
-    let content = null
-    let embeds = []
-    let row = []
-    let template = await getChannel(shop.channels.templates)
-    if (ar.content.length > 0) {
-      let msg = await template.messages.fetch(ar.content)
-      content = msg.content
+  
+  //
+  if (message.content.startsWith('.codes')) {
+    if (!await getPerms(message.member, 4)) return message.reply({ content: emojis.warning + ' Insufficient Permission' });
+    let args = await getArgs(message.content)
+    if (args.length < 2) return;
+    let acc = process.env[args[1]]
+    if (!acc) return message.reply(emojis.warning+" Invalid account keyword ` "+args[1]+" `.")
+    
+    await message.react(emojis.loading)
+    let amount = Number(args[2])
+    if (isNaN(amount)) amount = 1000//return message.reply(emojis.warning+" Invalid amount to generate ` "+args[2]+" `.")
+    let codes = []
+    for (let i in args) {
+      if (args[i].toLowerCase().includes('discord.gift') || args[i].toLowerCase().includes('discord.com/gifts')) {
+        let code = args[i].replace(/https:|discord.com\/gifts|discord.gift|\/|/g, '').replace(/ /g, '').replace(/[^\w\s]/gi, '').replace(/\\n|\|'|"/g, '')
+        let found = codes.find(c => c === code)
+        !found ? codes.push({ code: code, status: emojis.warning }) : null
+        }
     }
-    if (ar.embed) {
-      let msg = await template.messages.fetch(ar.embed.id)
-      let embed = new MessageEmbed()
-      .setColor(ar.embed.color)
-        .setDescription(msg.content)
-      embeds = [embed]
+    
+    let data = await fetchLinks(codes,amount,acc)
+    if (data.error) return message.reply(data.error)
+
+    // Combine the message into one large string
+    let messageContent = data.message;
+    await safeSend(message.channel,messageContent)
+  }
+  else if (message.content.startsWith('.regen')) {
+    if (!await getPerms(message.member, 4)) return message.reply({ content: emojis.warning + ' Insufficient Permission' });
+    message.content = message.content.replace('.regen', '')
+    let args = await getArgs(message.content)
+    if (args.length === 0) return;
+    let acc = process.env[args[0]]
+    if (!acc) return message.reply(emojis.warning+" Invalid account keyword ` "+args[0]+" `.")
+    let codes = []
+    for (let i in args) {
+      if (args[i].toLowerCase().includes('discord.gift') || args[i].toLowerCase().includes('discord.com/gifts')) {
+        let code = args[i].replace(/https:|discord.com\/gifts|discord.gift|\/|/g, '').replace(/ /g, '').replace(/[^\w\s]/gi, '').replace(/\\n|\|'|"/g, '')
+        let found = codes.find(c => c === code)
+        !found ? codes.push({ code: code, status: emojis.warning }) : null
+      }
     }
-    if (ar.row) {
-      row = [ar.row]
+    if (codes.length == 0) return message.reply(emojis.warning + " No codes found.")
+    
+    try {
+      let deleteMsg
+      await message.channel.send(emojis.loading + " Revoking **" + codes.length + "** codes").then(msg => deleteMsg = msg)
+      // Get billing
+      let data = []
+      let deletedString = ""
+      let validatedCodes = []
+      // Validate codes
+      for (let i in codes) {
+        let code = codes[i].code
+        let retry = true;
+
+        while (retry) {
+          // Check if link is claimed
+          let codeStatus = await fetch('https://discord.com/api/v10/entitlements/gift-codes/' + code, { method: 'GET', headers: { 'authorization': 'Bot '+process.env.SECRET, 'Content-Type': 'application/json' } })
+          codeStatus = await codeStatus.json();
+          // Return if claimed
+          if ((!codeStatus.retry_after && codeStatus.uses == 1) || (codeStatus.message == 'Unknown Gift Code')) {
+            deletedString += "` ["+code+"] `\n"
+            retry = false
+            continue
+          }
+          // Retry if rate limited
+          else if (codeStatus.retry_after) {
+            console.log("Rate limited. Retrying in 3 seconds...")
+            await sleep(3000);
+            continue
+          }
+          // Push SKU details
+          else if (!data.find(d => d.id == codeStatus.sku_id)) {
+              data.push({ id: codeStatus.sku_id, subscription: codeStatus.subscription_plan_id })
+          }
+          validatedCodes.push(codes[i])
+          retry = false
+        }
+        await sleep(1000) // Sleep for 1 second between each request to avoid rate limits
+      }
+      
+      let revoked = await revokeLinks(validatedCodes,acc)
+      if (revoked.error) return message.channel.send(revoked.error)
+      await deleteMsg.delete();
+      await safeSend(message.channel,revoked.message+"\n"+(codes.length == validatedCodes.length ? "** **" : "` ["+(codes.length-validatedCodes.length)+"] ` Invalid/Claimed Links\n"+deletedString+"\n** **"))
+      // Handle empty data
+      if (revoked.count == 0) return;
+      if (data.length == 0) return message.channel.send("No stock keeping unit (SKU) was found.")
+      await sleep(1000)
+      
+      // Generate codes
+      let createMsg
+      await message.channel.send(emojis.loading + "` [" + revoked.count + "] ` Generating New Codes").then(msg => createMsg = msg)
+      let generated = await generateLinks(revoked.count,data,acc)
+      if (generated.error) createMsg.reply(generated.error)
+      await createMsg.delete()
+      await safeSend(message.channel,generated.message)
+      
+    } catch (err) {
+      message.channel.send(emojis.warning + " An unexpected error occured.\n```diff\n- " + err + "```")
     }
-    message.channel.send({content: content, embeds: embeds,components: row})
+}
+  else if (message.content.startsWith('.revoke')) {
+    if (!await getPerms(message.member,4)) return message.reply({content: emojis.warning+' Insufficient Permission'});
+    message.content = message.content.replace('.revoke','')
+    let args = await getArgs(message.content)
+    if (args.length === 0) return;
+    let acc = process.env[args[0]]
+    if (!acc) return message.reply(emojis.warning+" Invalid account keyword ` "+args[0]+" `.")
+    
+    let codes = []
+    for (let i in args) {
+      if (args[i].toLowerCase().includes('discord.gift') || args[i].toLowerCase().includes('discord.com/gifts')) {
+      let code = args[i].replace(/https:|discord.com\/gifts|discord.gift|\/|/g,'').replace(/ /g,'').replace(/[^\w\s]/gi,'').replace(/\\n|\|'|"/g,'')
+      let found = codes.find(c => c === code)
+      !found ? codes.push({code: code, status: emojis.warning}) : null
+      }
+    }
+    if (codes.length == 0) return message.reply(emojis.warning+" No codes found.")
+    await message.react(emojis.loading)
+    try {
+      // Revoke links
+      let revoked = await revokeLinks(codes,acc)
+      if (revoked.error) return message.reply(revoked.error)
+      await safeSend(message.channel,revoked.message)
+      
+    } catch (err) {
+      message.reply(emojis.warning+" An unexpected error occured.\n```diff\n- "+err+"```")
+    }
+ }
+  else if (message.content.startsWith('.generate')) {
+    if (!await getPerms(message.member,4)) return message.reply({content: emojis.warning+' Insufficient Permission'});
+    message.content = message.content.replace('.generate','')
+    let args = await getArgs(message.content)
+    if (args.length === 0) return;
+    let acc = process.env[args[0]]
+    if (!acc) return message.reply(emojis.warning+" Invalid account keyword ` "+args[0]+" `.")
+    await message.react(emojis.loading)
+    let amount = Number(args[1])
+    // Generate links
+    let data = await generateLinks(amount,null,acc)
+    if (data.error) return message.reply(data.error)
+    await safeSend(message.channel,data.message)
   }
 }); //END MESSAGE CREATE
 
@@ -477,270 +489,46 @@ let yay = true
 let cStocks = 0
 let tStocks = 0
 
-client.on('guildMemberAdd', async member => {
-  let template = await getChannel(shop.channels.templates)
-  let msg = await template.messages.fetch('1270604608066031662')
-  let welcome = await getChannel('1180344563576098879')
-  msg.content = msg.content.replace('{user}',member.user.toString())
-  await welcome.send(msg.content)
-  await member.user.send(msg.content)
-});
 
 client.on("interactionCreate", async (inter) => {
   if (inter.isCommand()) {
     let cname = inter.commandName
-    if (cname === 'embed') {
-      if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
-      let options = inter.options._hoistedOptions
-      let embedId = options.find(a => a.name === 'id')
-      let title = options.find(a => a.name === 'title')
-      let description = options.find(a => a.name === 'description')
-      let color = options.find(a => a.name === 'color')
-      
-      let thumbnail = options.find(a => a.name === 'thumbnail')
-      let image = options.find(a => a.name === 'image')
-      let footer = options.find(a => a.name === 'footer')
-      
-      const embedData = await embedModel.findOne({id: embedId.value.toLowerCase()});
-      if (embedData) return inter.reply({content: emojis.warning+" This ID is already in use!", ephemeral: true})
-      let embed = new MessageEmbed()
-      .setDescription(description.value)
-      
-      if (color) embed.setColor(color.value);
-      else embed.setColor(colors.none);
-      
-      if (title) embed.setTitle(title.value);
-      if (thumbnail) embed.setThumbnail(thumbnail.value);
-      if (image) embed.setImage(image.value);
-      if (footer) embed.setFooter(footer.value);
-
-        const row = new MessageActionRow()
-            .addComponents(
-                new MessageButton()
-                    .setCustomId('edit_title')
-                    .setLabel('Edit Title')
-                    .setStyle('SECONDARY'),
-                new MessageButton()
-                    .setCustomId('edit_description')
-                    .setLabel('Edit Description')
-                    .setStyle('SECONDARY'),
-                new MessageButton()
-                    .setCustomId('edit_color')
-                    .setLabel('Edit Color')
-                    .setStyle('SECONDARY'),
-                new MessageButton()
-                    .setCustomId('edit_thumbnail')
-                    .setLabel('Edit Thumbnail')
-                    .setStyle('SECONDARY'),
-                new MessageButton()
-                    .setCustomId('edit_image')
-                    .setLabel('Edit Image')
-                    .setStyle('SECONDARY')
-            );
-
-        const row2 = new MessageActionRow()
-            .addComponents(
-                new MessageButton()
-                    .setCustomId('edit_footer')
-                    .setLabel('Edit Footer')
-                    .setStyle('SECONDARY'),
-                new MessageButton()
-                    .setCustomId('add_field')
-                    .setLabel('Add Field')
-                    .setStyle('SECONDARY'),
-                new MessageButton()
-                    .setCustomId('save_embed')
-                    .setLabel('Save Embed')
-                    .setStyle('SUCCESS')
-            );
-      
-      await inter.reply({content: emojis.loading+" Generating embed", ephemeral: true})
-      let msg
-      await inter.channel.send({ embeds: [embed], components: [row, row2] }).then(message => { msg = message});
-      const filter = i => i.user.id === inter.user.id;
-      const collector = inter.channel.createMessageComponentCollector({ filter, time: 900000 });
-      
-      collector.on('collect', async i => {
-        if (i.customId === 'save_embed') {  
-          console.log(embed)
-          let newEmbed = new embedModel({
-                id: embedId.value.toLowerCase(),
-                title: embed.title ? embed.title : null,
-                description: embed.description,
-                color: embed.color ? embed.color.toString(16).padStart(6, '0') : null,
-                thumbnail: embed.thumbnail ? embed.thumbnail.url : null,
-                image: embed.image ? embed.image.url : null,
-                footer: embed.footer ? embed.footer.text : null,
-                fields: embed.fields
-              });
-          await newEmbed.save();
-          await i.message.edit({ content: emojis.check+" Embed saved.\nYou can display this embed by running `/display_embed id:"+embedId.value+"`", components: [] });
-          collector.stop();
-          return;
-        }
-        msg = i.message
-        const editEmbed = async (property, value) => {
-                switch (property) {
-                    case 'title':
-                        embed.setTitle(value);
-                        break;
-                    case 'description':
-                        embed.setDescription(value);
-                        break;
-                    case 'color':
-                        embed.setColor(value);
-                        break;
-                    case 'thumbnail':
-                        embed.setThumbnail(value);
-                        break;
-                    case 'image':
-                        embed.setImage(value);
-                        break;
-                    case 'footer':
-                        embed.setFooter(value);
-                        break;
-                }
-                await i.message.edit({ embeds: [embed] });
-              
-            };
-        
-        if (i.customId.startsWith('edit_')) {
-          const property = i.customId.split('_')[1];
-          await i.reply({ content: `Please provide a new ${property}:`, ephemeral: true });
-
-          const messageFilter = response => response.author.id === inter.user.id;
-          const collected = await inter.channel.awaitMessages({ filter: messageFilter, max: 1, time: 30000 });
-            
-          if (collected.size > 0) {
-            const newValue = collected.first().content;
-            await editEmbed(property, newValue);
-            await collected.first().delete()
-          } else {
-            await i.followUp({ content: 'You did not provide a new value in time.', ephemeral: true });
-          }
-        } else if (i.customId === 'add_field') {
-          await i.reply({ content: 'Please provide the field name and value separated by a comma (e.g., "Name, Value"):', ephemeral: true });
-
-          const messageFilter = response => response.author.id === inter.user.id;
-          const collected = await inter.channel.awaitMessages({ filter: messageFilter, max: 1, time: 30000 });
-              
-          if (collected.size > 0) {
-            const fieldValue = collected.first().content.split(',');
-            if (fieldValue.length === 2) {
-              embed.addField(fieldValue[0].trim(), fieldValue[1].trim());
-              await i.message.edit({ embeds: [embed] });
-              await collected.first().delete()
-            } else {
-              await i.followUp({ content: 'Invalid format. Please provide the field name and value separated by a comma.', ephemeral: true });
-            }
-          } else {
-            await i.followUp({ content: 'You did not provide a field in time.', ephemeral: true });
-          }
-        }
-      });
-
-        collector.on('end', async collected => {
-          let row = new MessageActionRow().addComponents(
-            new MessageButton().setCustomId("yay").setStyle('SECONDARY').setLabel("Interaction ended").setDisabled(true),
-          );
-          await msg.edit({ components: [row] })
-          console.log(`Collected ${collected.size} interactions.`);
-        });
-    }
-    else if (cname === 'display_embed') {
-      if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
-      let options = inter.options._hoistedOptions
-        const embedId = options.find(a => a.name === 'id')
-        const embedData = await embedModel.findOne({id: embedId.value.toLowerCase()});
-
-        if (embedData) {
-          let embed = new MessageEmbed()
-          .setDescription(embedData.description)
-          console.log(embedData.color)
-          if (embedData.color) embed.setColor(embedData.color);
-          else embed.setColor(colors.none);
-          
-          if (embedData.title) embed.setTitle(embedData.title);
-          if (embedData.thumbnail) embed.setThumbnail(embedData.thumbnail);
-          if (embedData.image) embed.setImage(embedData.image);
-          if (embedData.footer) embed.setFooter(embedData.footer);
-          if (embedData.fields && embedData.fields.length > 0) {
-            embedData.fields.forEach(field => embed.addField(field.name, field.value));
-          }
-          await inter.reply({ content: emojis.loading+" Sending embed...", ephemeral: true });
-          await inter.channel.send({ embeds: [embed] });
-        } else {
-          await inter.reply({ content: 'Embed not found.', ephemeral: true });
-        }
-    }
-    else if (cname === 'delete_embed') {
-      if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
-      let options = inter.options._hoistedOptions
-        const embedId = options.find(a => a.name === 'id')
-        const embedData = await embedModel.findOne({id: embedId.value.toLowerCase()});
-
-        if (embedData) {
-          await embedModel.deleteOne({id: embedId.value})
-          await inter.reply({content: emojis.check+" I deleted a saved embed with the ID: `"+embedId.value+"`"})
-        } else {
-          await inter.reply({ content: 'Embed not found.', ephemeral: true });
-        }
-    }
-    else if (cname === 'show_embeds') {
-      if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
-        const embedData = await embedModel.find()
-        
-        if (embedData) {
-          let list = ""
-          let count = 0
-          for (let i in embedData) {
-            let doc = embedData[i]
-            count++
-            list += count+'. '+doc.id+'\n'
-          }
-          
-          let embed = new MessageEmbed()
-          .addFields(
-            {name: "Saved Embed IDs", value: list},
-            {name: "Configuration", value: "> `/display_embed [ID]` to display an embed\n> `/delete_embed [ID]` to remove an embed"}
-          )
-          .setColor(theme)
-          
-          await inter.reply({embeds: [embed]})
-        } else {
-          await inter.reply({ content: 'No embed found.', ephemeral: true });
-        }
-    }
     //Nitro dropper
-    else if (cname === 'drop') {
+    if (cname === 'drop') {
       if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
       let options = inter.options._hoistedOptions
       if (!yay) return inter.reply({content: emojis.warning+" The bot is currently busy deleting stocks ("+cStocks+"/"+tStocks+")", ephemeral: true})
-      await inter.deferReply();
+      await inter.reply({content: 'Fetching stocks.. '+emojis.loading, ephemeral: true})
       //
       let user = options.find(a => a.name === 'user')
       let quan = options.find(a => a.name === 'quantity')
+      let mop = options.find(a => a.name === 'mop')
       let item = options.find(a => a.name === 'item')
+      let ticket = options.find(a => a.name === 'ticket')
+      
       //Send prompt
       try {
         //Get stocks
-        let stocks = item.value === 'nitro boost' ? await getChannel(shop.channels.boostStocks) : item.value === 'nitro basic' ? await getChannel(shop.channels.basicStocks) : null
+        let stocks = await getChannel(shop.channels.stocks)
         let links = ""
-        let index = ""
+        let index = 0
         let msgs = []
+        let gotDrop = false
         let messages = await stocks.messages.fetch({limit: quan.value}).then(async messages => {
-          await messages.forEach(async (gotMsg) => {
+          messages.forEach(async (gotMsg) => {
             index++
             links += "\n"+index+". "+gotMsg.content
-            msgs.push(gotMsg)
+            msgs.push(gotMsg) 
+            gotDrop = true
           })
         })
         //Returns
-        if (links === "") return inter.editReply({content: emojis.x+" No stocks left.", ephemeral: true})
-        if (quan.value > index) return inter.editReply({content: emojis.warning+" Insufficient stocks. **"+index+"** "+item.value+'(s)'+" remaining.", ephemeral: true})
+        if (links === "") return inter.followUp({content: emojis.x+" No stocks left.", ephemeral: true})
+        if (quan.value > index) return inter.followUp({content: emojis.warning+" Insufficient stocks. **"+index+"** "+(item ? item.value : 'nitro boost(s)')+" remaining.", ephemeral: true})
         yay = false
         tStocks = quan.value
         //delete messages
+        console.log('Deleting '+msgs.length+' messages')
         for (let i in msgs) {
           await msgs[i].delete().then(msg => {
             ++cStocks
@@ -751,21 +539,43 @@ client.on("interactionCreate", async (inter) => {
             }
           });
         }
-        await addRole(await getMember(user.user.id,inter.guild),["Buyer","Pending"],inter.guild)
         //Send prompt
         let drops = await getChannel(shop.channels.drops)
         let dropMsg
         await drops.send({content: links}).then(msg => dropMsg = msg)
         //
         let row = new MessageActionRow().addComponents(
-          new MessageButton().setCustomId("drop-"+dropMsg.id).setStyle('SECONDARY').setEmoji('📩').setLabel("Drop"),
-          new MessageButton().setCustomId("showDrop-"+dropMsg.id).setStyle('SECONDARY').setEmoji('📋'),
+          new MessageButton().setCustomId("drop-"+dropMsg.id).setStyle('SECONDARY').setEmoji('📩').setLabel("Release"),
+          new MessageButton().setCustomId("showDrop-"+dropMsg.id).setStyle('SECONDARY').setEmoji('📎'),
+          new MessageButton().setCustomId("returnLinks-"+dropMsg.id).setStyle('SECONDARY').setEmoji('🔻')
         );
-        await inter.editReply({content: "<@"+user.user.id+"> Sending **"+quan.value+"** "+item.value+"(s)\n• Make sure to open your DMs.\n• The message may appear as **direct or request** message.", components: [row]})
+        let template = await getChannel(shop.channels.templates)
+        let prompt = await template.messages.fetch(shop.promptMessage)
+        inter.followUp({content: prompt.content.replace('{user}',user.user.toString()).replace('{quan}',quan.value).replace('{product}',item ? item.value : 'nitro boost(s)'), components: [row]})
+        //Send auto queue
+        let orders = await getChannel(shop.channels.orders)
+        
+        if (shop.autoQueue) {
+        let msg = await template.messages.fetch(shop.qMessage)
+        let content = msg.content
+        content = content
+          .replace('{user}','<@'+user.user.id+'>')
+          .replace('{ticket}',ticket ? ticket.channel.toString() : inter.channel.toString()) //'#'+
+          .replace('{quan}',quan.value.toString())
+          .replace('{product}',(item ? item.value : 'nitro boost'))
+          .replace('{mop}',mop ? mop.value : 'gcash')
+        
+          let embed = new MessageEmbed()
+          .setDescription(content)
+          .setColor('#86f4fa')
+          await orders.send({content: shop.viaContent ? content : null, embeds: !shop.viaContent ? [embed] : null}).then(async msg => {
+          await msg.react('<a:a_pinkcheck:1111569023285608478>')
+        })
+      }
         //
       } catch (err) {
         console.log(err)
-        await inter.editReply({content: emojis.warning+' Unexpected Error Occurred\n```diff\n- '+err+'```'})
+        inter.followUp({content: emojis.warning+' Unexpected Error Occurred\n```diff\n- '+err+'```'})
       }
     }
     //Queue
@@ -778,8 +588,6 @@ client.on("interactionCreate", async (inter) => {
       let quan = options.find(a => a.name === 'quantity')
       let mop = options.find(a => a.name === 'mop')
       let ticket = options.find(a => a.name === 'ticket')
-      let basePrice = options.find(a => a.name === 'base_price')
-      let price = basePrice.value*quan.value
       //
       try {
         let orders = await getChannel(shop.channels.orders)
@@ -790,22 +598,14 @@ client.on("interactionCreate", async (inter) => {
         content = content
           .replace('{user}',user.user.toString())
           .replace('{ticket}',ticket.channel.toString())
-          .replace('{quantity}',quan.value.toString())
+          .replace('{quan}',quan.value.toString())
           .replace('{product}',item.value)
           .replace('{mop}',mop ? mop.value : 'gcash')
-          .replace('{price}',price.toString())
         
         let msgUrl
         let member = await getMember(user.user.id,inter.guild)
-        let row = new MessageActionRow().addComponents(
-          new MessageSelectMenu().setCustomId('orderStatus').setPlaceholder('Update Order Status').addOptions([
-            {label: 'Noted',description: 'Change Order Status',value: 'noted', emoji: '<:priv:1272475872921649162>'},
-            {label: 'Processing',description: 'Change Order Status',value: 'processing', emoji: '<:megap:1272890445541802116>'},
-            {label: 'Completed',description: 'Change Order Status',value: 'completed', emoji: '<:rules:1272890463409668127>'},
-            {label: 'Cancelled',description: 'Change Order Status',value: 'cancelled', emoji: '<:lock:1272475852419891200>'},
-          ]),
-        )
-        await orders.send({content: content, components: [row]}).then(async msg => {
+        await orders.send({content: content}).then(async msg => {
+          await msg.react('<:c_pin:1090240927886483508>')
           msgUrl = msg.url
         })
         
@@ -813,91 +613,81 @@ client.on("interactionCreate", async (inter) => {
           new MessageButton().setURL(msgUrl).setStyle('LINK').setLabel("view message"),
         );
         
-        await inter.reply({content: 'Queue was sent to '+orders.toString(), components: [linkRow]})
+        inter.reply({content: 'Queue was sent to '+orders.toString(), components: [linkRow]})
       } catch (err) {
         console.log(err)
-        await inter.reply({content: emojis.warning+' Unexpected Error Occurred\n```diff\n- '+err+'```'})
+        inter.reply({content: emojis.warning+' Unexpected Error Occurred\n```diff\n- '+err+'```'})
       }
     }
     //Stocks
     else if (cname === 'stocks') {
-      let stockTemplates = await getChannel(shop.channels.otherStocks);
+      //if (inter.channel.id !== '1047454193595732058' && !await getPerms(inter.member,4)) return inter.reply({content: 'This command only works in <#1047454193595732058>\nPlease head there to use the command.', ephemeral: true})
+      
+      let stocks = await getChannel(shop.channels.stocks)
+      let stocks2 = await getChannel(shop.channels.otherStocks);
+      let quan = 0;
       let strong = ''
       let stockHolder = [[],[],[],[],[],[],[],[],[],[]];
       let holderCount = 0
       let arrays = []
       
+      let last_id;
+      let mentionsCount = 0
+      let limit = 500
       let msgSize = 0
       let totalMsg = 0
       
-      let data = {
-        nitroBoost: 0,
-        nitroBasic: 0,
-        completed: 0,
-        f: {
-          last_id: null,
-          msgSize: 0,
-          totalMsg: 0,
-        }
-      }
-      
-      await inter.deferReply()
-      
       while (true) {
-        const options = { limit: 100 };
-        if (data.f.last_id) options.before = data.f.last_id;
-        
-        //
-        let stocks = null
-        if (data.completed === 0) stocks = await getChannel(shop.channels.boostStocks)
-        else stocks = await getChannel(shop.channels.basicStocks)
-        //Put to storage
-        await stocks.messages.fetch(options).then(async messages => {
-          data.f.last_id = messages.last()?.id;
-          totalMsg += messages.size
-          msgSize = messages.size
-          await messages.forEach(async (gotMsg) => {
-            console.log(gotMsg.content+' - '+data.completed)
-            data.completed === 0 ? data.nitroBoost++ : data.nitroBasic++
-            strong += gotMsg.content+'\n'
-          })
+      const options = { limit: 100 };
+      if (last_id) {
+        options.before = last_id;
+      }
+      
+      let messages = await stocks.messages.fetch(options).then(async messages => {
+      
+      last_id = messages.last()?.id;
+      totalMsg += messages.size
+      msgSize = messages.size
+        console.log(msgSize,'e')
+        await messages.forEach(async (gotMsg) => {
+          if (gotMsg.content.includes('discord.gift')) quan++
+          strong += gotMsg.content+'\n'
+        })
+        console.log(quan,'thus')
+      });
+      //Return
+      if (msgSize != 100) {
+        let messages2 = await stocks2.messages.fetch({ limit: 100 })
+      .then(async (messages) => {
+        messages.forEach(async (gotMsg) => {
+          arrays.push(gotMsg.content);
         });
-        
-        if (msgSize != 100) {
-          if (data.completed === 0) data.completed++
-          else {
-            await stockTemplates.messages.fetch({ limit: 100 })
-              .then(async (messages) => {
-              messages.forEach(async (gotMsg) => { arrays.push(gotMsg.content) }); 
-            });
-            stockHolder[0].push(new MessageButton().setCustomId('none').setStyle('SECONDARY').setLabel('Nitro Boost ('+data.nitroBoost+')').setEmoji(emojis.nboost))
-            stockHolder[0].push(new MessageButton().setCustomId('none2').setStyle('SECONDARY').setLabel('Nitro Basic ('+data.nitroBasic+')').setEmoji(emojis.nbasic))
-            //Loop
-            for (let i in arrays) {
-              let msg = arrays[i];
-              if (arrays.length > 0) {
-                let args = await getArgs(msg);
-                let text = args[0].includes(':') ? args.slice(1).join(" ") : msg
-                let emoji = args[0].includes(':') ? args[0] : null
-                if (stockHolder[holderCount].length === 5) holderCount++
-                stockHolder[holderCount].push(new MessageButton().setCustomId("none"+getRandom(1,10000)).setStyle("SECONDARY").setLabel(text).setEmoji(args[0].includes(':') ? args[0] : null));
-              }
-            }
-            //Handle display
-            let comps = []
-            for (let i in stockHolder) {
-              if (stockHolder[i].length !== 0) {
-                let row = new MessageActionRow();
-                row.components = stockHolder[i];
-                comps.push(row)
-              }
-            }
-            console.log(strong)
-            await inter.editReply({components: comps})
-            break;
-          }
+      });
+      console.log(quan,'this')
+      stockHolder[0].push(new MessageButton().setCustomId('none').setStyle('SECONDARY').setLabel('Nitro Boost ('+quan+')').setEmoji(emojis.nboost))
+      for (let i in arrays) {
+        let msg = arrays[i];
+        if (arrays.length > 0) {
+          let args = await getArgs(msg);
+          let text = args[0].includes(':') ? args.slice(1).join(" ") : msg
+          let emoji = args[0].includes(':') ? args[0] : null
+          if (stockHolder[holderCount].length === 5) holderCount++
+          stockHolder[holderCount].push(new MessageButton().setCustomId("none"+getRandom(1,10000)).setStyle("SECONDARY").setLabel(text).setEmoji(args[0].includes(':') ? args[0] : null));
         }
       }
+    
+      let comps = []
+      for (let i in stockHolder) {
+        if (stockHolder[i].length !== 0) {
+          let row = new MessageActionRow();
+          row.components = stockHolder[i];
+          comps.push(row)
+        }
+      }
+        await inter.reply({components: comps})
+        break;
+      }
+    }
     }
   }
   else if (inter.isButton()) {
@@ -915,20 +705,15 @@ client.on("interactionCreate", async (inter) => {
       let error = false;
       let copy = new MessageActionRow().addComponents(
           new MessageButton().setCustomId('copyLinks').setStyle('SECONDARY').setLabel('Copy Links')//.setEmoji("<:ting:1105094214544523314>"),
+        //new MessageButton().setLabel('Vouch Here').setURL('https://discord.com/channels/1047454193159503904/1054724474659946606').setStyle('LINK').setEmoji('<:S_letter:1092606891240198154>')
         );
       let code = makeCode(10)
       let refCode = shop.refCode ? "Ref code: `"+code+"`\n" : ''
-      let content = msg.content.replace('{server_name}',inter.guild.name).replace('{links}',refCode+'||'+dropMsg.content+" ||")
-      let embed = new MessageEmbed()
-      .setDescription(content)
-      .setColor('#ffb9ca')
-      .setImage('https://media.discordapp.net/attachments/1106611226525585582/1107544991766691903/Untitled702_20210830023853.png')
-      
-      await member.send({content: msg.content.replace('{server_name}',inter.guild.name)+"\n\n"+refCode+"||"+dropMsg.content+" ||", components: [copy]}).catch((err) => {
+      await member.send({content: msg.content+"\n\n"+refCode+"||"+dropMsg.content+" ||", components: [copy]}).catch((err) => {
         error = true
         console.log(err)
         inter.reply({content: emojis.x+" Failed to process delivery.\n\n```diff\n- "+err+"```", ephemeral: true})})
-        .then(async (msg) => {
+      .then(async (msg) => {
         if (error) return;
         let row = new MessageActionRow().addComponents(
           new MessageButton().setCustomId('sent').setStyle('SUCCESS').setLabel('Sent to '+member.user.tag).setDisabled(true),
@@ -938,7 +723,7 @@ client.on("interactionCreate", async (inter) => {
           new MessageButton().setCustomId('code').setStyle('SECONDARY').setLabel(code).setDisabled(true),
           )
         }
-        await inter.update({components: [row]})
+        inter.update({components: [row]})
         dropMsg.edit({content: (shop.refCode ? code+'\n' : '')+dropMsg.content, components: [row]})
       })
     }
@@ -990,7 +775,7 @@ client.on("interactionCreate", async (inter) => {
     }
     else if (id.startsWith('copyLinks')) {
       
-      let content = inter.message.content
+      let content = inter.message.content//.replace(msg.content,'').replace(/\||Ref code:/g,'')
       let args = await getArgs(content)
       let count = 0
       let string = ''
@@ -1025,6 +810,7 @@ client.on("interactionCreate", async (inter) => {
       }
     }
   }
+  
 });
 process.on('unhandledRejection', async error => {
   ++errors
@@ -1039,46 +825,6 @@ process.on('unhandledRejection', async error => {
   )
   .setColor(colors.red)
   
-  try {
-    let channel = await getChannel(shop.channels.output)
-    channel ? channel.send({embeds: [embed]}).catch(error => error) : null
-  } catch (err) {
-    console.log(err)
-  }
+  let channel = await getChannel(shop.channels.output)
+  channel ? channel.send({embeds: [embed]}).catch(error => error) : null
 });
-
-let ready = true;
-const interval = setInterval(async function() {
-  //Get time
-  let date = new Date().toLocaleString("en-US", { timeZone: 'Asia/Shanghai' });
-  let today = new Date(date);
-  let hours = (today.getHours() % 12) || 12;
-  let state = today.getHours() >= 12 ? 'PM' : 'AM';
-  let day = today.getDay();
-  let time = hours +":"+today.getMinutes()+state;
-  //Get info
-  if (ready) {
-    ready = false
-    if (!ready) {
-      setTimeout(function() {
-        ready = true;
-      },60000)
-    }
-    let template = await getChannel(shop.channels.templates)
-    let guild = await getGuild(shop.guild)
-    let channel = await getChannel('1')
-        
-    if (time === '8:0AM') {
-      ready = false
-      let msg = await template.messages.fetch("1270604673744896042")
-      channel.send({content: msg.content})
-    }
-  }
-  
-  if (!ready) {
-    setTimeout(function() {
-      ready = true
-    },50000)
-  }
-  
-  },5000)
