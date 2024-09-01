@@ -26,41 +26,37 @@ module.exports = {
       boostStocks: '',
       basicStocks: '',
       otherStocks: '',
-      templates: '1270604387374334087',
+      templates: '',
       drops: '',
-      orders: '1272480413755113522',
+      orders: '',
       reports: '',
       output: '',
     },
     dmMessage: '',
-    qMessage: '1270604644497752115',
+    qMessage: '',
     rMessage: '',
     ar: {
       responders: [
         {
           trigger: '.39847324',
-          content: '1270604575325552660',
-          autoDelete: false,
+          content: '1152546156300218431',
+          autoDelete: true,
           row: null,
         },
       ],
     },
     promptMessage: null,
     bot: {
-      status: [
-        {
-          status: "idle", //online, idle, dnd
-          activities: [
-            { name: "u", type: "Watching".toUpperCase(), //playing, watching, listening only
-            }, ], 
-        },
-        {
-          status: "idle", //online, idle, dnd
-          activities: [
-            { name: "u", type: "Watching".toUpperCase(), //playing, watching, listening only
-            }, ], 
-        },
-      ]
+      status: {
+        status: "online",
+        activities: [
+          {
+            name: "Bot Comms",
+            type: "Watching".toUpperCase(),
+            //url: 'https://www.twitch.tv/videos/1841805330'
+          },
+        ],
+      },
     },
   },
   permissions: [
