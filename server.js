@@ -157,6 +157,17 @@ client.on("messageCreate", async (message) => {
   //
   if (message.author.bot) return;
   //Checker
+  else if (message.content.toLowerCase().startsWith('.eval')) {
+    let expression = message.content.toLowerCase().replace('.eval','')
+    try {
+      let total = eval(expression)
+      message.reply(total.toString())
+    } catch (err) {
+      console.log(err)
+    }
+  }
+  if (message.channel.type === "DM") return;
+  //
   let checkerVersion = 'Checker version 2.9'
   if (message.channel?.name?.includes('nitro-checker')) {
     let args = getArgs(message.content)
@@ -340,16 +351,6 @@ client.on("messageCreate", async (message) => {
     shop.checkers = []
     !message.channel.type === 'DM' ? message.delete() : null
   }
-  else if (message.content.toLowerCase().startsWith('.eval')) {
-    let expression = message.content.toLowerCase().replace('.eval','')
-    try {
-      let total = eval(expression)
-      message.reply(total.toString())
-    } catch (err) {
-      console.log(err)
-    }
-  }
-  if (message.channel.type === "DM") return;
   //
   let ar = shop.ar.responders.find(r => message.content.toLowerCase().startsWith(r.trigger))
   if (ar) {
