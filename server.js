@@ -10,6 +10,7 @@ const cc = 'KJ0UUFNHWBJSE-WE4GFT-W4VG'
 const Discord = require("discord.js");
 const { WebhookClient, Permissions, Client, Intents, MessageEmbed, MessageActionRow, MessageButton, MessageSelectMenu, } = Discord;
 const myIntents = new Intents();
+
 myIntents.add(
   Intents.FLAGS.GUILD_PRESENCES,
   Intents.FLAGS.GUILD_VOICE_STATES,
@@ -28,7 +29,8 @@ let listen
 
 async function startApp() {
   console.log("Starting...");
-  if (cc !== process.env.CC) console.log(listen), process.exit(1);
+  if (client.user) return console.log("User already logged in.")
+  if (cc !== process.env.CC) return console.error("Discord bot login | Invalid CC");
   let promise = client.login(token)
   promise?.catch(function (error) {
     console.error("Discord bot login | " + error);
@@ -37,9 +39,14 @@ async function startApp() {
 }
 startApp();
 
-client.on("debug", (x) => {
-  //console.log(x)
-})
+client.on("debug", async function (info) {
+  let status = info.split(" ");
+  if (status[2] === `429`) {
+    console.log(`info -> ${info}`); //debugger
+    console.log(`Caught a 429 error!`);
+    await sleep(60000)
+  }
+});
 //When bot is ready
 client.on("ready", async () => {
   console.log(client.user.id)
@@ -60,6 +67,7 @@ client.on("ready", async () => {
       console.log(json.name+' - '+response.status)
     }
     for (let i in slashCmd.deleteSlashes) {
+      await sleep(2000)
       let deleteUrl = "https://discord.com/api/v10/applications/"+client.user.id+"/commands/"+slashCmd.deleteSlashes[i]
       let deleteRes = await fetch(deleteUrl, {
         method: 'delete',

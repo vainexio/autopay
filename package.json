@@ -4,7 +4,7 @@
   "//3": "updating this file will download and update your packages",
   "name": "vainexio-template-1",
   "version": "0.0.1",
-  "description": "A discord bot template by vainexio",
+  "description": "A discord bot template by vainexio.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
