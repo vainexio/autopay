@@ -83,7 +83,7 @@ client.on("ready", async () => {
 module.exports = { client: client, getPerms, noPerms };
 
 let listener = app.listen(process.env.PORT, function () {
-  console.log("Not that it matters but your app is listening on port " +listener.address().port);
+  console.log("Not that it matters but your app is listening on port ",listener.address());
 });
 
 //Settings
