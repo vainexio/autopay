@@ -32,7 +32,7 @@ module.exports = {
       reports: '',
       output: '',
     },
-    dmMessage: '',
+    dmMessage: '1294904355404775456',
     qMessage: '',
     rMessage: '',
     ar: {
@@ -61,7 +61,7 @@ module.exports = {
   },
   permissions: [
     {
-      id: "",
+      id: "1288819955441078292",
       level: 4,
     },
     {
