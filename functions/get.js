@@ -6,6 +6,9 @@ const settings = require('../storage/settings_.js')
 const colors = settings.colors
 
 module.exports = {
+  getTime: function(stamp) {
+    return Math.floor(new Date(stamp).getTime()/1000.0);
+  },
   getNth: function (value) {
     value = value.toString()
 

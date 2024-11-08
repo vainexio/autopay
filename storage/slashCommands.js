@@ -127,3 +127,77 @@ module.exports = {
     }*/
   ],
 };
+
+let slashes = [
+  {
+      name: 'embed',
+      type: 1,
+      description: 'Create an embed message',
+      options: [
+        { name: 'id', type: 3, description: 'ID of the embed', required: true },
+        { name: 'description', type: 3, description: 'Description of the embed', required: true },
+        { name: 'title', type: 3, description: 'Title of the embed', required: false },
+        { name: 'color', type: 3, description: 'Color of the embed in HEX', required: false },
+        { name: 'thumbnail', type: 3, description: 'Thumbnail URL', required: false },
+        { name: 'image', type: 3, description: 'Image URL', required: false },
+        { name: 'footer', type: 3, description: 'Footer text', required: false }
+      ]
+    },
+    {
+      name: 'display_embed',
+      type: 1,
+      description: 'Display an embed message',
+      options: [
+        { name: 'id', type: 3, description: 'ID of the embed', required: true },
+      ]
+    },
+    {
+      name: 'delete_embed',
+      type: 1,
+      description: 'Delete an embed message',
+      options: [
+        { name: 'id', type: 3, description: 'ID of the embed', required: true },
+      ]
+    },
+    {
+      name: 'show_embeds',
+      type: 1,
+      description: 'Show all embed messages',
+    },
+  {
+      name: "calculate",
+      type: 1,
+      description: "Calculate fee based on amount",
+      options: [
+        {
+          "name": 'type',
+          "description": 'Type of transaction',
+          "type": 3,
+          "choices": [
+            {
+              name: 'Robux Gamepass',
+              value: 'robux'
+            },
+          ],
+          "required": true,
+        },
+        { 
+          name: 'amount', type: 10, required: true,
+          description: 'Amount to calculate',
+        },
+      ]
+    },
+  {
+      name: "calculate",
+      type: 1,
+      description: "Calculator",
+      options: [
+        {
+          "name": 'input',
+          "description": 'Math equation',
+          "type": 3,
+          "required": true,
+        },
+      ]
+    },
+]

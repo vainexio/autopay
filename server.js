@@ -42,11 +42,12 @@ startApp();
 client.on("debug", async function (info) {
   let status = info.split(" ");
   if (status[2] === `429`) {
-    console.log(`info -> ${info}`); //debugger
+    console.log(`info -> ${info}`); // Debugger
     console.log(`Caught a 429 error!`);
     await sleep(60000)
   }
 });
+
 //When bot is ready
 client.on("ready", async () => {
   console.log(client.user.id)
@@ -91,7 +92,7 @@ const settings = require("./storage/settings_.js");
 const { prefix, shop, colors, theme, commands, permissions, emojis } = settings;
 //Functions
 const get = require("./functions/get.js");
-const { getNth, getChannel, getGuild, getUser, getMember, getRandom, getColor } = get;
+const { getTime, getNth, getChannel, getGuild, getUser, getMember, getRandom, getColor } = get;
 //Command Handler
 const cmdHandler = require("./functions/commands.js");
 const { checkCommand, isCommand, isMessage, getTemplate } = cmdHandler;
@@ -375,6 +376,18 @@ client.on("messageCreate", async (message) => {
     }
     message.channel.send({content: content, embeds: embeds,components: row})
   }
+  //
+  if ((message.content.toLowerCase().startsWith('calcu') && !message.content.toLowerCase().includes('process'))) {
+    let expression = message.content.toLowerCase().replace('calcu','')
+    if (/[a-zA-Z]/.test(expression)) {
+      //
+    } else {
+      try {
+        let total = eval(expression)
+        message.reply(total.toString())
+      } catch (err) { }
+    }
+  }
 }); //END MESSAGE CREATE
 
 let yay = true
@@ -447,42 +460,49 @@ client.on("interactionCreate", async (inter) => {
       let options = inter.options._hoistedOptions
       //
       let user = options.find(a => a.name === 'user')
-      let item = options.find(a => a.name === 'item')
+      let product = options.find(a => a.name === 'product')
       let quan = options.find(a => a.name === 'quantity')
       let mop = options.find(a => a.name === 'mop')
-      let ticket = options.find(a => a.name === 'ticket')
-      let basePrice = options.find(a => a.name === 'base_price')
-      let price = basePrice.value*quan.value
+      let price = options.find(a => a.name === 'price')
       //
+      inter.deferReply();
       try {
         let orders = await getChannel(shop.channels.orders)
         let template = await getChannel(shop.channels.templates)
         let msg = await template.messages.fetch(shop.qMessage)
-        let status = 'NOTED'
+        let status = 'PENDING'
         let content = msg.content
         content = content
-          .replace('{user}',user.user.toString())
-          .replace('{ticket}',ticket.channel.toString())
+          .replace('{user}','<@'+user.user.id+'>')
+          .replace('{price}',price.value.toString())
           .replace('{quan}',quan.value.toString())
-          .replace('{product}',item.value)
+          .replace('{product}',product.value)
           .replace('{mop}',mop ? mop.value : 'gcash')
-          .replace('{price}',price.toString())
+          .replace('{ticket}',inter.channel.toString()+' ('+inter.channel.name+')')
+          .replace('{status}',status)
+          .replace('{stamp}','<t:'+getTime(new Date().getTime())+':R>')
         
+        let row = new MessageActionRow().addComponents(
+          new MessageSelectMenu().setCustomId('orderStatus').setPlaceholder('Update Order Status').addOptions([
+            {label: 'Noted',description: 'Change Order Status',value: 'noted', emoji: '<a:BunnyBook:1304407161673351221>'},
+            {label: 'Processing',description: 'Change Order Status',value: 'processing', emoji: '<a:PinkLoading:1304377633479462983>'},
+            {label: 'Completed',description: 'Change Order Status',value: 'completed', emoji: '<a:verifyedpink:1286730047025315880>'},
+            {label: 'Cancelled',description: 'Change Order Status',value: 'cancelled', emoji: '<:no_pink:1304407329592180779>'},
+          ]),
+        )
         let msgUrl
         let member = await getMember(user.user.id,inter.guild)
-        await orders.send({content: content}).then(async msg => {
-          await msg.react('<a:PinkDice:1131891214279524372>')
-          msgUrl = msg.url
-        })
         
+        await orders.send({content: content, components: [row]}).then(msg => msgUrl = msg.url)
+        inter.channel.setName(quan.value+'。'+product.value)
         let linkRow = new MessageActionRow().addComponents(
-          new MessageButton().setURL(msgUrl).setStyle('LINK').setLabel("view message"),
+          new MessageButton().setURL(msgUrl).setStyle('LINK').setEmoji('<a:PinkLoading:1304377633479462983>').setLabel("view order"),
         );
         
-        await inter.reply({content: 'Queue was sent to '+orders.toString(), components: [linkRow]})
+        await inter.editReply({content: '<a:BunnyBook:1304407161673351221> you order was placed ( '+orders.toString()+' )', components: [linkRow]})
       } catch (err) {
         console.log(err)
-        await inter.reply({content: emojis.warning+' Unexpected Error Occurred\n```diff\n- '+err+'```'})
+        await inter.editReply({content: emojis.warning+' Unexpected Error Occurred\n```diff\n- '+err+'```'})
       }
     }
     //Stocks
