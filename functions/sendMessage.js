@@ -5,14 +5,12 @@ const {MessageAttachment, Client, Intents, MessageEmbed, MessageActionRow, Messa
 module.exports = {
   safeSend: async function(channel,messageContent) {
     if (messageContent.length > 2000) {
-      // Create a .txt file from the messageContent
+      
       const buffer = Buffer.from(messageContent, 'utf-8');
-      const attachment = new MessageAttachment(buffer, 'codes.txt');
+      const attachment = new MessageAttachment(buffer, 'botMessage.txt');
 
-      // Send the file as an attachment
       await channel.send({files: [attachment] });
     } else {
-      // If the message is under the limit, just send it normally
       await channel.send(messageContent);
     }
   },

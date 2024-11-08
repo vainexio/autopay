@@ -21,6 +21,10 @@ module.exports = {
     autoQueue: false,
     refCode: false,
     viaContent: true,
+    stayOnVc: {
+      enabled: false,
+      channel: "",
+    },
     channels: {
       checker: '',
       boostStocks: '',
@@ -47,16 +51,20 @@ module.exports = {
     },
     promptMessage: null,
     bot: {
-      status: {
-        status: "online",
-        activities: [
-          {
-            name: "Bot Comms",
-            type: "Watching".toUpperCase(),
-            //url: 'https://www.twitch.tv/videos/1841805330'
-          },
-        ],
-      },
+      status: [
+        {
+          status: "idle", //online, idle, dnd
+          activities: [
+            { name: "u", type: "Watching".toUpperCase(), //playing, watching, listening only
+            }, ], 
+        },
+        {
+          status: "idle", //online, idle, dnd
+          activities: [
+            { name: "u", type: "Watching".toUpperCase(), //playing, watching, listening only
+            }, ], 
+        },
+      ]
     },
   },
   permissions: [
