@@ -21,6 +21,7 @@ module.exports = {
     autoQueue: false,
     refCode: false,
     viaContent: true,
+    database: false,
     stayOnVc: {
       enabled: false,
       channel: "",

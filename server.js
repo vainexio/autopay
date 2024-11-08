@@ -25,6 +25,7 @@ myIntents.add(
 const client = new Client({ intents: myIntents, partials: ["CHANNEL"] });
 
 //Env
+const mongooseToken = process.env.MONGOOSE;
 const token = process.env.SECRET;
 let listen
 
@@ -57,6 +58,7 @@ let stickyModel
 //When bot is ready
 client.on("ready", async () => {
   console.log(client.user.id)
+  //
   if (shop.stayOnVc.enabled) {
     let channel = await getChannel(shop.stayOnVc.channel)
     const connection = joinVoiceChannel({
@@ -65,6 +67,33 @@ client.on("ready", async () => {
       adapterCreator: channel.guild.voiceAdapterCreator
     });
   }
+  //
+  if (shop.database) {
+    await mongoose.connect(mongooseToken);
+    
+    stickySchema = new mongoose.Schema({
+      channelId: String,
+      message: String,
+    })
+    
+    embedSchema = new mongoose.Schema({
+      id: String,
+      title: String,
+      description: String,
+      color: String,
+      thumbnail: String,
+      image: String,
+      footer: String,
+      fields: [{
+        name: String,
+        value: String
+      }]
+    });
+  
+  embedModel = mongoose.model('EmbedModel_', embedSchema);
+  stickyModel = mongoose.model("StickyModel_", stickySchema);
+  }
+  //
   if (slashCmd.register) {
     let discordUrl = "https://discord.com/api/v10/applications/"+client.user.id+"/commands"
     let headers = {
@@ -107,6 +136,12 @@ let listener = app.listen(process.env.PORT, function () {
   console.log("Not that it matters but your app is listening on port ",listener.address());
 });
 
+//Send Messages
+const sendMsg = require("./functions/sendMessage.js");
+const { safeSend, sendChannel, sendUser } = sendMsg;
+//Links Handler
+const linksHandler = require('./functions/linksHandler.js')
+const { generateLinks, revokeLinks, fetchLinks} = linksHandler
 //Settings
 const settings = require("./storage/settings_.js");
 const { prefix, shop, colors, theme, commands, permissions, emojis } = settings;
@@ -373,6 +408,28 @@ client.on("messageCreate", async (message) => {
     !message.channel.type === 'DM' ? message.delete() : null
   }
   //
+  else if (isCommand('sticky',message)) {
+    if (!await getPerms(message.member,4)) return message.reply({content: emojis.warning+' Insufficient Permission'});
+      let args = await requireArgs(message,1)
+      let sticky = await stickyModel.findOne({channelId: message.channel.id})
+      if (sticky) return message.reply(emojis.warning+" You can only set 1 sticky per channel.")
+      let doc = new stickyModel(stickySchema)
+      doc.channelId = message.channel.id
+      doc.message = message.content.replace(args[0]+" ",'')
+      await doc.save();
+      await message.react(emojis.check)
+  }
+  else if (isCommand('unsticky',message)) {
+    if (!await getPerms(message.member,4)) return message.reply({content: emojis.warning+' Insufficient Permission'});
+    let sticky = await stickyModel.findOne({channelId: message.channel.id})
+    if (sticky) {
+      await stickyModel.deleteOne({channelId: message.channel.id})
+      message.reply(emojis.check+" I removed the sticky on this channel.")
+    } else {
+      message.reply(emojis.x+" This channel has no sticky :c")
+    }
+  }
+  //
   let ar = shop.ar.responders.find(r => message.content.toLowerCase().startsWith(r.trigger))
   if (ar) {
     if (ar.autoDelete) message.delete();
@@ -396,7 +453,7 @@ client.on("messageCreate", async (message) => {
     }
     message.channel.send({content: content, embeds: embeds,components: row})
   }
-  //
+  // Calcu cmd
   if ((message.content.toLowerCase().startsWith('calcu') && !message.content.toLowerCase().includes('process'))) {
     let expression = message.content.toLowerCase().replace('calcu','')
     if (/[a-zA-Z]/.test(expression)) {
@@ -407,6 +464,21 @@ client.on("messageCreate", async (message) => {
         message.reply(total.toString())
       } catch (err) { }
     }
+  }
+  
+  //Sticky
+  let sticky = stickyModel ? await stickyModel.findOne({channelId: message.channel.id}) : null
+  if (sticky) {
+    let messages = await message.channel.messages.fetch({ limit: 10 }).then(messages => {
+      messages.forEach(async (gotMsg) => {
+        console.log(gotMsg.content,sticky.message)
+        if (gotMsg.author.id === client.user.id && gotMsg.content === sticky.message) {
+          await gotMsg.delete();
+          //
+        }
+      })
+    });
+    await message.channel.send({content: sticky.message})
   }
 }); //END MESSAGE CREATE
 
@@ -842,6 +914,290 @@ client.on("interactionCreate", async (inter) => {
         } else {
           await inter.reply({ content: 'No embed found.', ephemeral: true });
         }
+    }
+    //// regen
+    if (cname === 'regen') {
+      if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
+      let options = inter.options._hoistedOptions
+      let account = options.find(a => a.name === 'account')
+      let links = options.find(a => a.name === 'links')
+      let args = await getArgs(links.value)
+      await inter.deferReply();
+      let codes = []
+      for (let i in args) {
+        if (args[i].toLowerCase().includes('discord.gift') || args[i].toLowerCase().includes('discord.com/gifts')) {
+          let code = args[i].replace(/https:|discord.com\/gifts|discord.gift|\/|/g, '').replace(/ /g, '').replace(/[^\w\s]/gi, '').replace(/\\n|\|'|"/g, '')
+          let found = codes.find(c => c === code)
+          !found ? codes.push({ code: code, status: emojis.warning }) : null
+          }
+      }
+      
+      if (codes.length == 0) return inter.editReply(emojis.warning + " No codes found.")
+      
+      try {
+        let deleteMsg
+        await inter.editReply("-# "+emojis.loading + " Validating **" + codes.length + "** codes")
+        // Get billing
+        let data = []
+        let invalidString = ""
+        let invalidCount = 0
+        let otherAccString = ""
+        let otherAccCount = 0
+        let validatedCodes = []
+        let otherAcc = []
+        let revokedCount = 0
+        let links = [
+          { name: "nitro", codes: [], billings: [] },
+          { name: "nitro-basic", codes: [], billings: [] }
+        ]
+        // Validate codes
+        for (let i in codes) {
+          let code = codes[i].code
+          let retry = true;
+
+          while (retry) {
+            // Check if link is claimed
+            let codeStatus = await fetch('https://discord.com/api/v10/entitlements/gift-codes/' + code, { method: 'GET', headers: { 'authorization': 'Bot '+process.env.SECRET, 'Content-Type': 'application/json' } })
+            codeStatus = await codeStatus.json();
+            // Return if claimed
+            if ((!codeStatus.retry_after && codeStatus.uses == 1) || (codeStatus.message == 'Unknown Gift Code')) {
+              invalidString += "` ["+code+"] `\n"
+              invalidCount++
+              retry = false
+              continue
+            }
+            // Retry if rate limited
+            else if (codeStatus.retry_after) {
+              console.log('retry for '+codes[i].code)
+              let ret = Math.ceil(codeStatus.retry_after)
+              ret = ret.toString()+"000"
+              let waitingTime = Number(ret) < 300000 ? Number(ret) : 60000
+              await sleep(waitingTime)
+              continue
+            }
+            // If link is on other account
+            else if (codeStatus.user.username.toLowerCase().replace(/\./g,'') !== account.value) {
+              otherAccCount++
+              let foundAcc = otherAcc.find(d => d.name == codeStatus.user.username)
+              if (foundAcc) {
+                foundAcc.string += otherAccCount+". discord.gift/"+code+"\n"
+              } else {
+                otherAcc.push({name: codeStatus.user.username,string: "\n`"+codeStatus.user.username+"`\n"+otherAccCount+". discord.gift/"+code+"\n"}) 
+              }
+              retry = false
+              continue
+            }
+            
+            let slug = codeStatus.store_listing.sku.slug
+            let storage = links.find(l => l.name == slug)
+            if (!storage) return inter.channel.send(emojis.warning+" Invalid storage: "+slug)
+            storage.codes.push(codes[i])
+            //
+            if (!storage.billings.find(d => d.id == codeStatus.sku_id)) {
+              storage.billings.push({ id: codeStatus.sku_id, subscription: codeStatus.subscription_plan_id })
+            }
+            validatedCodes.push(codes[i])
+            retry = false
+          }
+          //await sleep(1000) // Sleep for 1 second between each request to avoid rate limits
+        }
+        // Revoke links
+        for (let i in links) {
+          let storage = links[i]
+          if (storage.codes.length > 0) {
+            let revokeMsg
+            await inter.channel.send(emojis.loading+" Revoking **"+storage.codes.length+"** "+storage.name+" giftcodes.").then(msg => revokeMsg = msg)
+          
+            let revoked = await revokeLinks(storage.codes,account.value)
+            if (revoked.error) return inter.channel.send(revoked.error)
+            revokedCount += revoked.count
+            await revokeMsg.delete();
+            await safeSend(inter.channel,revoked.message+"\n"+(codes.length == validatedCodes.length ? "" : "` ["+(invalidCount)+"] ` Invalid/Claimed Links\n"+invalidString+"** **"))
+            
+            if (revokedCount == 0) return;
+            // Create links
+            let createMsg
+            await inter.channel.send(emojis.loading + "` [" + revoked.count + "] ` Generating New Codes ("+storage.name+")").then(msg => createMsg = msg)
+            let generated = await generateLinks({ amount: revoked.count, sku: storage.billings, account: account.value, type: storage.name})
+          
+            if (generated.error) return createMsg.reply(generated.error)
+            await createMsg.delete()
+            await safeSend(inter.channel,generated.message)
+          }
+        }
+      
+        if (revokedCount == 0) {
+          await safeSend(inter.channel,"` ["+(invalidCount)+"] ` Invalid/Claimed Links\n"+invalidString+"** **")
+        }
+        // Links in other accounts
+        if (otherAccCount > 0) {
+          let string = ""
+          for (let i in otherAcc) {
+            string += otherAcc[i].string
+          }
+          await safeSend(inter.channel,"` ["+otherAccCount+"] ` Links in other account\n"+string)
+        }
+      } catch (err) {
+        console.log(err)
+        inter.channel.send(emojis.warning + " An unexpected error occured.\n```diff\n- " + err + "```")
+      }
+    }
+    // revoke
+    else if (cname === 'revoke') {
+      if (inter.user.id == "497918770187075595") {}
+      else if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
+      let options = inter.options._hoistedOptions
+      let account = options.find(a => a.name === 'account')
+      let links = options.find(a => a.name === 'links')
+      let args = await getArgs(links.value)
+      await inter.deferReply();
+      let codes = []
+      for (let i in args) {
+        if (args[i].toLowerCase().includes('discord.gift') || args[i].toLowerCase().includes('discord.com/gifts')) {
+          let code = args[i].replace(/https:|discord.com\/gifts|discord.gift|\/|/g, '').replace(/ /g, '').replace(/[^\w\s]/gi, '').replace(/\\n|\|'|"/g, '')
+          let found = codes.find(c => c === code)
+          !found ? codes.push({ code: code, status: emojis.warning }) : null
+          }
+      }
+      
+      if (codes.length == 0) return inter.editReply(emojis.warning + " No codes found.")
+      
+      try {
+        let deleteMsg
+        await inter.editReply("-# "+emojis.loading + " Validating **" + codes.length + "** codes")
+        // Get billing
+        let data = []
+        let invalidString = ""
+        let invalidCount = 0
+        let otherAccString = ""
+        let otherAccCount = 0
+        let validatedCodes = []
+        let otherAcc = []
+        let revokedCount = 0
+        let links = [
+          { name: "nitro", codes: [], billings: [] },
+          { name: "nitro-yearly", codes: [], billings: [] },
+          { name: "nitro-basic", codes: [], billings: [] }
+        ]
+        // Validate codes
+        for (let i in codes) {
+          let code = codes[i].code
+          let retry = true;
+
+          while (retry) {
+            // Check if link is claimed
+            let codeStatus = await fetch('https://discord.com/api/v10/entitlements/gift-codes/' + code, { method: 'GET', headers: { 'authorization': 'Bot '+process.env.SECRET, 'Content-Type': 'application/json' } })
+            codeStatus = await codeStatus.json();
+            // Return if claimed
+            if ((!codeStatus.retry_after && codeStatus.uses == 1) || (codeStatus.message == 'Unknown Gift Code')) {
+              invalidString += "` ["+code+"] `\n"
+              invalidCount++
+              retry = false
+              continue
+            }
+            // Retry if rate limited
+            else if (codeStatus.retry_after) {
+              console.log('retry for '+codes[i].code)
+              let ret = Math.ceil(codeStatus.retry_after)
+              ret = ret.toString()+"000"
+              let waitingTime = Number(ret) < 300000 ? Number(ret) : 60000
+              await sleep(waitingTime)
+              continue
+            }
+            // If link is on other account
+            else if (codeStatus.user.username.toLowerCase().replace(/\./g,'') !== account.value) {
+              otherAccCount++
+              let foundAcc = otherAcc.find(d => d.name == codeStatus.user.username)
+              if (foundAcc) {
+                foundAcc.string += otherAccCount+". discord.gift/"+code+"\n"
+              } else {
+                otherAcc.push({name: codeStatus.user.username,string: "\n`"+codeStatus.user.username+"`\n"+otherAccCount+". discord.gift/"+code+"\n"}) 
+              }
+              retry = false
+              continue
+            }
+            
+            let slug = codeStatus.store_listing.sku.slug
+            let storage = links.find(l => l.name == slug)
+            if (!storage) return inter.channel.send(emojis.warning+" Invalid storage: "+slug)
+            storage.codes.push(codes[i])
+            //
+            if (!storage.billings.find(d => d.id == codeStatus.sku_id)) {
+              storage.billings.push({ id: codeStatus.sku_id, subscription: codeStatus.subscription_plan_id })
+            }
+            validatedCodes.push(codes[i])
+            retry = false
+          }
+        }
+        // Revoke links
+        for (let i in links) {
+          let storage = links[i]
+          if (storage.codes.length > 0) {
+            let revokeMsg
+            await inter.channel.send(emojis.loading+" Revoking **"+storage.codes.length+"** "+storage.name+" giftcodes.").then(msg => revokeMsg = msg)
+          
+            let revoked = await revokeLinks(storage.codes,account.value)
+            if (revoked.error) return inter.channel.send(revoked.error)
+            revokedCount += revoked.count
+            await revokeMsg.delete();
+            await safeSend(inter.channel,revoked.message+"\n"+(codes.length == validatedCodes.length ? "" : "` ["+(invalidCount)+"] ` Invalid/Claimed Links\n"+invalidString+"** **"))
+            
+            if (revokedCount == 0) return;
+          }
+        }
+      
+        if (revokedCount == 0) {
+          await safeSend(inter.channel,"` ["+(invalidCount)+"] ` Invalid/Claimed Links\n"+invalidString+"** **")
+        }
+        // Links in other accounts
+        if (otherAccCount > 0) {
+          let string = ""
+          for (let i in otherAcc) {
+            string += otherAcc[i].string
+          }
+          await safeSend(inter.channel,"` ["+otherAccCount+"] ` Links in other account\n"+string)
+        }
+      } catch (err) {
+        console.log(err)
+        inter.channel.send(emojis.warning + " An unexpected error occured.\n```diff\n- " + err + "```")
+      }
+    }
+    else if (cname === 'generate') {
+      if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
+      let options = inter.options._hoistedOptions
+      let account = options.find(a => a.name === 'account')
+      let amount = options.find(a => a.name === 'amount')
+      let type = options.find(a => a.name === 'type')
+      await inter.reply({content: "-# "+emojis.loading+" Generating **"+amount.value+"** "+type.value+"(s)"})
+      
+      let data = await generateLinks({ amount: amount.value, sku: null, account: account.value, type: type.value})
+      if (data.error) return inter.channel.send(data.error)
+      await safeSend(inter.channel,data.message)
+    }
+    else if (cname === 'codes') {
+      if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
+      let options = inter.options._hoistedOptions
+      let account = options.find(a => a.name === 'account')
+      let limit = options.find(a => a.name === 'limit')
+      let exclude = options.find(a => a.name === 'exclude')
+      let type = options.find(a => a.name === 'type')
+      if (!limit) limit = { value: "all" }
+      await inter.reply({content: "-# "+emojis.loading+" Getting **"+limit.value+"** claimable "+(type ? type.value+"(s)" : "gift")+" codes in "+account.value})
+      
+      let excludeCodes = []
+      if (exclude) {
+        let args = await getArgs(exclude.value)
+        for (let i in args) {
+          if (args[i].toLowerCase().includes('discord.gift') || args[i].toLowerCase().includes('discord.com/gifts')) {
+            let code = args[i].replace(/https:|discord.com\/gifts|discord.gift|\/|/g, '').replace(/ /g, '').replace(/[^\w\s]/gi, '').replace(/\\n|\|'|"/g, '')
+            let found = excludeCodes.find(c => c === code)
+            !found ? excludeCodes.push({ code: code, status: emojis.warning }) : null
+          }
+        }
+      }
+      let data = await fetchLinks({ limit: limit && limit.value == "all" ? 1000 : limit.value, exclude: excludeCodes, account: account.value, type: !type ? "all" : type.value})
+      if (data.error) return inter.channel.send(data.error)
+      await safeSend(inter.channel,data.message)
     }
   }
   else if (inter.isButton()) {
