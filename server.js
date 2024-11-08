@@ -31,6 +31,7 @@ let listen
 
 async function startApp() {
   console.log("Starting...");
+  return
   if (client.user) return console.log("User already logged in.")
   if (cc !== process.env.CC) return console.error("Discord bot login | Invalid CC");
   let promise = client.login(token)
@@ -552,10 +553,10 @@ client.on("interactionCreate", async (inter) => {
       let options = inter.options._hoistedOptions
       //
       let user = options.find(a => a.name === 'user')
-      let product = options.find(a => a.name === 'product')
+      let product = options.find(a => a.name === 'item')
       let quan = options.find(a => a.name === 'quantity')
       let mop = options.find(a => a.name === 'mop')
-      let price = options.find(a => a.name === 'price')
+      //let price = options.find(a => a.name === 'price')
       //
       inter.deferReply();
       try {
@@ -566,7 +567,6 @@ client.on("interactionCreate", async (inter) => {
         let content = msg.content
         content = content
           .replace('{user}','<@'+user.user.id+'>')
-          .replace('{price}',price.value.toString())
           .replace('{quan}',quan.value.toString())
           .replace('{product}',product.value)
           .replace('{mop}',mop ? mop.value : 'gcash')
@@ -574,24 +574,17 @@ client.on("interactionCreate", async (inter) => {
           .replace('{status}',status)
           .replace('{stamp}','<t:'+getTime(new Date().getTime())+':R>')
         
-        let row = new MessageActionRow().addComponents(
-          new MessageSelectMenu().setCustomId('orderStatus').setPlaceholder('Update Order Status').addOptions([
-            {label: 'Noted',description: 'Change Order Status',value: 'noted', emoji: '<a:BunnyBook:1304407161673351221>'},
-            {label: 'Processing',description: 'Change Order Status',value: 'processing', emoji: '<a:PinkLoading:1304377633479462983>'},
-            {label: 'Completed',description: 'Change Order Status',value: 'completed', emoji: '<a:verifyedpink:1286730047025315880>'},
-            {label: 'Cancelled',description: 'Change Order Status',value: 'cancelled', emoji: '<:no_pink:1304407329592180779>'},
-          ]),
-        )
+        let row = JSON.parse(JSON.stringify(shop.orderStatus));
         let msgUrl
         let member = await getMember(user.user.id,inter.guild)
         
         await orders.send({content: content, components: [row]}).then(msg => msgUrl = msg.url)
-        inter.channel.setName(quan.value+'。'+product.value)
+        
         let linkRow = new MessageActionRow().addComponents(
           new MessageButton().setURL(msgUrl).setStyle('LINK').setEmoji('<a:PinkLoading:1304377633479462983>').setLabel("view order"),
         );
         
-        await inter.editReply({content: '<a:BunnyBook:1304407161673351221> you order was placed ( '+orders.toString()+' )', components: [linkRow]})
+        await inter.editReply({content: 'you order was placed ( '+orders.toString()+' )', components: [linkRow]})
       } catch (err) {
         console.log(err)
         await inter.editReply({content: emojis.warning+' Unexpected Error Occurred\n```diff\n- '+err+'```'})
@@ -1200,7 +1193,7 @@ client.on("interactionCreate", async (inter) => {
       await safeSend(inter.channel,data.message)
     }
   }
-  else if (inter.isButton()) {
+  else if (inter.isButton() || inter.isSelectMenu()) {
     let id = inter.customId;
     if (id.startsWith('drop-')) {
       if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission', ephemeral: true});
@@ -1241,6 +1234,23 @@ client.on("interactionCreate", async (inter) => {
         await inter.update({components: [row]})
         dropMsg.edit({content: (shop.refCode ? code+'\n' : '')+dropMsg.content, components: [row]})
       })
+    }
+    else if (id === 'orderStatus') {
+      if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission', ephemeral: true});
+      
+      let stat = ['noted','processing','completed','cancelled']
+      let found = stat.find(s => s === inter.values[0])
+      if (!found) return inter.reply({content: emojis.warning+' Invalid order status: `'+inter.values[0]+'`', ephemeral: true})
+      //if (inter)
+      let args = await getArgs(inter.message.content)
+      let a = args[args.length-3]
+      let b = args[args.length-1]
+      let content = inter.message.content.replace(/PENDING|NOTED|PROCESSING|COMPLETED|CANCELLED/g,found.toUpperCase()).replace(b,'<t:'+getTime(new Date().getTime())+':R>')
+      
+      let row = JSON.parse(JSON.stringify(shop.orderStatus));
+      found === 'completed' || found === 'cancelled' ? row.components[0].disabled = true : null
+      
+      await inter.update({content: content, components: [row]})
     }
     else if (id.startsWith('returnLinks-')) {
       if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission', ephemeral: true});

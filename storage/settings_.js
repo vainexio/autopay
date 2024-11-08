@@ -1,4 +1,7 @@
- let colors = {
+const Discord = require('discord.js');
+const {Client, Intents, MessageEmbed, MessageActionRow, MessageButton, MessageSelectMenu} = Discord;
+
+let colors = {
   red: "#ea3737",
   blue: "#1200ff",
   green: "#00ff04",
@@ -14,8 +17,16 @@
 }
 
 module.exports = {
-  prefix: ";", //Prefix
+  prefix: ".", //Prefix
   shop: {
+    orderStatus: new MessageActionRow().addComponents(
+      new MessageSelectMenu().setCustomId('orderStatus').setPlaceholder('Update Order Status').addOptions([
+        {label: 'Noted',description: 'Change Order Status',value: 'noted', emoji: '<a:BunnyBook:1304407161673351221>'},
+        {label: 'Processing',description: 'Change Order Status',value: 'processing', emoji: '<a:PinkLoading:1304377633479462983>'},
+        {label: 'Completed',description: 'Change Order Status',value: 'completed', emoji: '<a:verifyedpink:1286730047025315880>'},
+        {label: 'Cancelled',description: 'Change Order Status',value: 'cancelled', emoji: '<:no_pink:1304407329592180779>'},
+      ]),
+    ),
     breakChecker: false,
     checkers: [],
     autoQueue: false,

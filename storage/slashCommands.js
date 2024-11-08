@@ -47,6 +47,15 @@ module.exports = {
       ]
     },
     {
+      name: "stocks",
+      type: 1,
+      description: "Shows a list of available stocks",
+    }*/
+  ],
+};
+
+let slashes = [
+  {
       "name": "queue",
       "type": 1,
       "description": "Sends an order queue",
@@ -70,65 +79,13 @@ module.exports = {
           "required": true,
         },
         {
-          "name": 'base_price',
-          "description": 'Base price of the item',
-          "type": 4,
-          "required": true,
-        },
-        {
-          "name": 'ticket',
-          "description": 'Ticket channel',
-          "type": 7,
-          "required": true,
-        },
-      ]
-    },
-    {
-      "name": "report",
-      "type": 1,
-      "description": "Sends a report queue",
-      "options": [
-        {
-          "name": 'user',
-          "description": 'Recipient',
-          "type": 6,
-          "required": true,
-        },
-        {
-          "name": 'item',
-          "description": 'Item Name',
+          "name": 'mop',
+          "description": 'Mode of payment',
           "type": 3,
           "required": true,
         },
-        {
-          "name": 'quantity',
-          "description": 'Amount to send',
-          "type": 10,
-          "required": true,
-        },
-        {
-          "name": 'price_paid',
-          "description": 'Price paid of the item',
-          "type": 4,
-          "required": true,
-        },
-        {
-          "name": 'ticket',
-          "description": 'Ticket channel',
-          "type": 7,
-          "required": true,
-        },
       ]
     },
-    {
-      name: "stocks",
-      type: 1,
-      description: "Shows a list of available stocks",
-    }*/
-  ],
-};
-
-let slashes = [
   {
       name: 'embed',
       type: 1,
@@ -196,6 +153,43 @@ let slashes = [
           "name": 'input',
           "description": 'Math equation',
           "type": 3,
+          "required": true,
+        },
+      ]
+    },
+  {
+      "name": "report",
+      "type": 1,
+      "description": "Sends a report queue",
+      "options": [
+        {
+          "name": 'user',
+          "description": 'Recipient',
+          "type": 6,
+          "required": true,
+        },
+        {
+          "name": 'item',
+          "description": 'Item Name',
+          "type": 3,
+          "required": true,
+        },
+        {
+          "name": 'quantity',
+          "description": 'Amount to send',
+          "type": 10,
+          "required": true,
+        },
+        {
+          "name": 'price_paid',
+          "description": 'Price paid of the item',
+          "type": 4,
+          "required": true,
+        },
+        {
+          "name": 'ticket',
+          "description": 'Ticket channel',
+          "type": 7,
           "required": true,
         },
       ]
