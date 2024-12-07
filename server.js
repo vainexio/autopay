@@ -1379,16 +1379,8 @@ const interval = setInterval(async function() {
     let channel = await getChannel('1')
         
     if (time === '30:0PM') {
-      ready = false
       let msg = await template.messages.fetch("1131863357083881522")
       channel.send({content: msg.content})
     }
   }
-  
-  if (!ready) {
-    setTimeout(function() {
-      ready = true
-    },50000)
-  }
-  
-  },5000)
+},5000)
