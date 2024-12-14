@@ -844,7 +844,7 @@ client.on("interactionCreate", async (inter) => {
           console.log(`Collected ${collected.size} interactions.`);
         });
     }
-    else if (cname === 'display_embed') {
+    else if (cname === 'show_embed') {
       if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
       let options = inter.options._hoistedOptions
         const embedId = options.find(a => a.name === 'id')
@@ -883,7 +883,7 @@ client.on("interactionCreate", async (inter) => {
           await inter.reply({ content: 'Embed not found.', ephemeral: true });
         }
     }
-    else if (cname === 'show_embeds') {
+    else if (cname === 'my_embeds') {
       if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
         const embedData = await embedModel.find()
         

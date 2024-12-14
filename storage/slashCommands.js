@@ -87,7 +87,7 @@ let slashes = [
       ]
     },
   {
-      name: 'embed',
+      name: 'create_embed',
       type: 1,
       description: 'Create an embed message',
       options: [
@@ -101,7 +101,7 @@ let slashes = [
       ]
     },
     {
-      name: 'display_embed',
+      name: 'show_embed',
       type: 1,
       description: 'Display an embed message',
       options: [
@@ -117,7 +117,7 @@ let slashes = [
       ]
     },
     {
-      name: 'show_embeds',
+      name: 'my_embeds',
       type: 1,
       description: 'Show all embed messages',
     },
