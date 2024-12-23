@@ -432,7 +432,10 @@ client.on("interactionCreate", async (inter) => {
       .replace('{initials}',serverData.myGcash.initials)
       .replace('{num}',num)
       
-      await inter.channel.send(content)
+      let comp = new MessageActionRow().addComponents(
+        new MessageButton().setCustomId('reply-09459868489').setStyle('SECONDARY').setEmoji(emojis.offline).setLabel("copy number")
+          );
+      await inter.channel.send({content: content, components: [comp]})
     }
     else if (id.startsWith("unregisPrompt-")) {
       let userId = id.replace('unregisPrompt-','')
