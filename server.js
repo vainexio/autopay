@@ -38,7 +38,6 @@ let listen
 
 async function startApp() {
   console.log("Starting...");
-  return
   if (client.user) return console.log("User already logged in.")
   if (cc !== process.env.CC) return console.error("Discord bot login | Invalid CC");
   let promise = client.login(token)
@@ -81,7 +80,12 @@ client.on("ready", async () => {
     
     serverSchema = new mongoose.Schema({
       id: String,
-      
+      username: String,
+      logChannel: String,
+      myGcash: {
+        number: String,
+        initials: String,
+      }
     })
     
     phoneModel = mongoose.model("SloopiePhone", phoneSchema);
@@ -288,9 +292,7 @@ client.on("interactionCreate", async (inter) => {
       let serverId = id.replace('autopay-','')
       
       let serverData = await serverModel.findOne({id: serverId})
-      if (serverData) {
-        
-      }
+      if (!serverData) return await inter.reply({content: emojis.warning+" No server data."})
       await inter.update({components: []})
       
       // Normalize number
@@ -306,7 +308,7 @@ client.on("interactionCreate", async (inter) => {
       }
       
       // Create thread
-      let thread = [ { question: "Type the phone number you're going to use in sending payment.\n-# format: 09XXXXXXXXX", answer: '', }, ]
+      let thread = [ { question: "Type the phone number you're going to use in sending payment.\n-# Correct format: 09XXXXXXXXX", answer: '', }, ]
       const filter = m => m.author.id === inter.user.id;
       
       let row = new MessageActionRow().addComponents(
@@ -356,10 +358,18 @@ client.on("interactionCreate", async (inter) => {
       }
       // Insert shop data
       let foundShopData = shop.expected.find(i => i.channel == inter.channel.id)
-      if (!foundShopData) shop.expected.push({channel: inter.channel.id, num: num})
+      if (!foundShopData) shop.expected.push({channel: inter.channel.id, num: num, myGcash: serverData.myGcash.number})
       else if (foundShopData) foundShopData.num = num
       
+      let templates = await getChannel(shop.channels.templates)
+      let foundMsg = await templates.messages.fetch('1320650204046688257')
       
+      foundMsg.content
+      .replace('{myGcash}',serverData.myGcash.number)
+      .replace('{initials}',serverData.myGcash.initials)
+      .replace('{num}',num)
+      
+      await inter.channel.send(foundMsg.content)
     }
     else if (id.startsWith("reply-")) {
       let reply = id.replace("reply-", "");
@@ -385,7 +395,6 @@ app.get('/gcash', async function (req, res) {
     console.log(req.query)
     return res.status(404).send({error: 'Invalid log channel!'})
   }
-  
   
   if (!text) return res.status(404).send({error: 'Invalid Message'})
   let args = await getArgs(text)

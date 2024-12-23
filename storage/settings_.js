@@ -33,7 +33,7 @@ module.exports = {
     autoQueue: false,
     refCode: false,
     viaContent: true,
-    database: false,
+    database: true,
     stayOnVc: {
       enabled: false,
       channel: "",
@@ -43,7 +43,7 @@ module.exports = {
       boostStocks: '',
       basicStocks: '',
       otherStocks: '',
-      templates: '',
+      templates: '1109020434810294344',
       drops: '',
       orders: '',
       reports: '',

@@ -15,42 +15,21 @@ module.exports = {
   register: false,
   deleteSlashes: [],
   slashes: [
-    /*{
-      name: "drop",
+    {
+      name: "setnum",
       type: 1,
-      description: "Drops an item to a user",
+      description: "Set your GCash phone number",
       options: [
         { 
-          name: 'user', type: 6, required: true,
-          description: 'Recipient'
-        },
-        {
-          "name": 'item',
-          "description": 'Item name',
-          "type": 3,
-          "choices": [
-            {
-              name: 'nitro boost',
-              value: 'nitro boost'
-            },
-            {
-              name: 'nitro basic',
-              value: 'nitro basic'
-            },
-          ],
-          "required": true,
+          name: 'number', type: 6, required: true,
+          description: 'Phone number'
         },
         { 
-          name: 'quantity', type: 10, required: true,
-          description: 'Amount to send',
+          name: 'initials', type: 6, required: true,
+          description: 'Account initials'
         },
       ]
     },
-    {
-      name: "stocks",
-      type: 1,
-      description: "Shows a list of available stocks",
-    }*/
   ],
 };
 
