@@ -19,6 +19,7 @@ let colors = {
 module.exports = {
   prefix: ".", //Prefix
   shop: {
+    expected: [],
     orderStatus: new MessageActionRow().addComponents(
       new MessageSelectMenu().setCustomId('orderStatus').setPlaceholder('Update Order Status').addOptions([
         {label: 'Noted',description: 'Change Order Status',value: 'noted', emoji: '<a:BunnyBook:1304407161673351221>'},

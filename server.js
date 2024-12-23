@@ -368,8 +368,17 @@ client.on("interactionCreate", async (inter) => {
 app.get('/gcash', async function (req, res) {
   
   let text = req.query.text.length > 0 ? req.query.text : req.query.bigtext
+  let username = req.query.user
+  let password = req.query.log
+  let accessUser = process.env[username]
+  if (!accessUser || !password) return res.status(404).send({error: "No user or pass data."})
   
-  console.log(req.query)
+  if (accessUser !== password) {
+    console.log("Invalid password")
+    console.log(req.query)
+    return res.status(404).send({error: 'Invalid password!'})
+  }
+  
   
   if (!text) return res.status(404).send({error: 'Invalid Message'})
   let args = await getArgs(text)
@@ -382,18 +391,13 @@ app.get('/gcash', async function (req, res) {
     senderNumber: args[lastIndex-1].replace('.',''),
     amount: Number(args[4]),
   }
+  
   let channel = await getChannel(shop.channels.smsReader)
-  if (!data.body.startsWith('You have received')) {
-    res.status(200).send({success: 'Not a transaction'})
-    let embed = new MessageEmbed()
-    .addFields( { name: 'Message Received', value: text } )
-    .setColor(colors.none)
-    
-    await channel.send({content: '@everyone', embeds: [embed]})
-    return;
-  } else if (data.body.startsWith('You have received')) {
+  
+  if (data.body.startsWith('You have received')) {
     res.status(200).send({success: 'Transaction Received'})
-    console.log('data',data)
+    console.log('Data; '+username,data)
+    
     //Send log
     let embed = new MessageEmbed()
     .addFields(
@@ -416,24 +420,22 @@ app.get('/gcash', async function (req, res) {
       let cd = await getChannel(transac.channel)
       if (!cd) shop.expected.splice(i,1)
     }
+    
     console.log(shop.expected)
+    
     for (let i in shop.expected) {
+      
       let transac = shop.expected[i]
-      console.log(transac)
-      if (transac.amount == data.amount && (transac.num == data.senderNumber || transac.num == "None")) {
+      
+      if (transac.num == data.senderNumber) {
         let cd = await getChannel(transac.channel)
         if (!cd) return shop.expected.splice(i,1)
-        await cd.send({content: emojis.check+" Your payment was received *!*", embeds: [embed]})
+        await cd.send({content: emojis.check+" Payment received *!*", embeds: [embed]})
         shop.expected.splice(i,1)
-        return
-      } else if (transac.num == data.senderNumber) {
-        let cd = await getChannel(transac.channel)
-        if (!cd) return shop.expected.splice(i,1)
-        await cd.send({content: emojis.check+" Payment was detected through registered number *!*", embeds: [embed]})
-        shop.expected.splice(i,1)
-        return
+        return;
       }
     }
+    
     await channel.send({content: '@everyone '+emojis.check+' New Transaction ('+data.senderNumber+')', embeds: [embed]})
   }
   
