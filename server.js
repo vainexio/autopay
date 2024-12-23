@@ -89,7 +89,7 @@ client.on("ready", async () => {
       }
     })
     
-    phoneModel = mongoose.model("SloopiePhone2", phoneSchema);
+    phoneModel = mongoose.model("SloopiePhone", phoneSchema);
     serverModel = mongoose.model("SeverPhoneModel", serverSchema);
   }
   //
@@ -335,7 +335,7 @@ client.on("interactionCreate", async (inter) => {
         .addFields(
           {name: "Guild", value: "Guild ID `"+guild?.id+"`\nGuild Name `"+guild?.name+"`", inline: true},
           {name: "Username", value: username.value, inline: true},
-          {name: "My GCash", value: "Number `"+serverModel.myGcash.number+"`\nInitials `"+serverModel.myGcash.initials+"`"},
+          {name: "My GCash", value: "Number `"+doc.myGcash.number+"`\nInitials `"+doc.myGcash.initials+"`"},
         )
         
         let row = new MessageActionRow().addComponents(
@@ -477,7 +477,10 @@ app.get('/gcash', async function (req, res) {
   if (!username || !password) return res.status(404).send({error: "Insufficient credentials."})
   
   let serverData = await serverModel.findOne({username: username})
-  if (!serverData) return res.status(404).send({error: "No server data found with username: "+username})
+  if (!serverData) {
+    console.log("No server data found with username: "+username)
+    return res.status(404).send({error: "No server data found with username: "+username})
+  }
   
   if (serverData.password !== password) {
     console.log("Invalid password")

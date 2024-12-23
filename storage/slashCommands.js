@@ -73,6 +73,25 @@ module.exports = {
         },
       ]
     },
+    {
+      "name": "unregister",
+      "type": 1,
+      "description": "Unregister",
+      "options": [
+        {
+          "name": 'username',
+          "description": 'Username',
+          "type": 3,
+          "required": true,
+        },
+        {
+          "name": 'password',
+          "description": 'Password',
+          "type": 3,
+          "required": true,
+        },
+      ],
+    },
   ],
 };
 
