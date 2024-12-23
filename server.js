@@ -320,22 +320,35 @@ client.on("interactionCreate", async (inter) => {
       newDoc.myGcash.initials = gcash_initials.value
       await newDoc.save()
       
-      await inter.reply({content: emojis.on+" Your guild was registered"})
+      await inter.reply({content: emojis.on+" Your server was registered"})
+    }
+    else if (cname === 'unregister') {
+      let options = inter.options._hoistedOptions
+      //
+      let username = options.find(a => a.name === 'username')
+      let password = options.find(a => a.name === 'password')
       
-      let embed = new MessageEmbed()
-      .addFields(
-        {name: "Generated Key", value: "This key was generated for the first time. Make sure you save it."},
-        {name: "Data", value: "Guild ID `"+guild.id+"`\nGuild Name `"+guild.name+"`"}
-      )
-      .setColor(theme)
+      let doc = await serverModel.findOne({username: username.value})
+      let guild = await getGuild(doc.id)
       
-      await inter.user.send({content: newDoc.key, embeds: [embed], ephemeral: true})
-        .then(msg => inter.followUp({content: emojis.check+' Your access key has been sent via direct message'}))
-        .catch(async err => {
-        console.log(err)
-        inter.followUp({content: emojis.warning+' Unable to send access key via direct message\n```diff\n-'+err+'```'})
-        await guildModel.deleteOne({key: newDoc.key})
-      })
+      if (doc && doc.password == password.value) {
+        let embed = new MessageEmbed()
+        .setDescription(emojis.off+' Your server is flagged for termination')
+        .setColor(colors.red)
+        .addFields(
+          {name: "Guild", value: "Guild ID `"+guild?.id+"`\nGuild Name `"+guild?.name+"`", inline: true},
+          {name: "Username", value: username.value, inline: true},
+          {name: "My GCash", value: "Number `"+serverModel.myGcash.number+"`\nInitials `"+serverModel.myGcash.initials+"`"},
+        )
+        
+        let row = new MessageActionRow().addComponents(
+          new MessageButton().setCustomId('unregisPrompt-'+doc.id).setStyle('DANGER').setLabel("Unregister").setEmoji(emojis.warning),
+        );
+        await inter.reply({content: doc.id, embeds: [embed], components: [row], ephemeral: true})
+        
+      } else {
+        await inter.reply({content: emojis.warning+' Invalid username and password'})
+      }
     }
   }
   else if (inter.isButton() || inter.isSelectMenu()) {
@@ -422,6 +435,32 @@ client.on("interactionCreate", async (inter) => {
       .replace('{num}',num)
       
       await inter.channel.send(foundMsg.content)
+    }
+    else if (id.startsWith("unregisPrompt-")) {
+      let userId = id.replace('unregisPrompt-','')
+      let row = new MessageActionRow().addComponents(
+        new MessageButton().setCustomId('unregister-'+inter.message.content).setStyle('SUCCESS').setLabel("Yes"),
+        new MessageButton().setCustomId('cancel').setStyle('DANGER').setLabel("No"),
+      );
+      await inter.reply({content: 'Are you sure you want to unregister this server?\n> This action is irreversible!', ephemeral: true, components: [row]})
+    }
+    else if (id.startsWith('unregister-')) {
+      let guildId = id.replace('unregister-','')
+      let userId = inter.user.id
+      let doc = await serverModel.findOne({id: guildId})
+      let guild = await getGuild(doc.id)
+      if (!doc) return inter.update({content: emojis.warning+' Unergistered guild ID', components: []})
+      
+      let embed = new MessageEmbed()
+        .setDescription(emojis.off+' This guild data was terminated by '+inter.user.toString())
+        .setColor(colors.red)
+        .addFields(
+          {name: "Guild", value: "Guild ID `"+guild?.id+"`\nGuild Name `"+guild?.name+"`", inline: true},
+          {name: "Username", value: doc.username, inline: true},
+          {name: "My GCash", value: "Number `"+doc.myGcash.number+"`\nInitials `"+doc.myGcash.initials+"`"},
+        )
+      await serverModel.deleteOne({id: guildId})
+      await inter.reply({embeds: [embed]})
     }
     else if (id.startsWith("reply-")) {
       let reply = id.replace("reply-", "");
