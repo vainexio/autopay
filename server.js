@@ -31,6 +31,9 @@ const token = process.env.SECRET;
 let phoneSchema
 let phoneModel
 
+let serverSchema
+let serverModel
+
 let listen
 
 async function startApp() {
@@ -55,11 +58,6 @@ client.on("debug", async function (info) {
   }
 });
 
-let embedSchema
-let embedModel
-
-let stickySchema
-let stickyModel
 //When bot is ready
 client.on("ready", async () => {
   console.log(client.user.id)
@@ -81,7 +79,12 @@ client.on("ready", async () => {
       number: String,
     })
     
+    serverSchema = new new mongoose.Schema({
+      id: String,
+    })
+    
     phoneModel = mongoose.model("SloopiePhone", phoneSchema);
+    serverModel = mongoose.model("SeverPhoneModel", serverSchema);
   }
   //
   if (slashCmd.register) {
@@ -275,35 +278,30 @@ client.on("interactionCreate", async (inter) => {
     let id = inter.customId;
     if (id.startsWith('autopay-')) {
       let userId = id.replace('autopay-','')
+      
       await inter.update({components: []})
+      
+      // Normalize number
       function normalizeMobileNumber(input) {
-        // Remove all non-numeric characters
         let cleaned = input.replace(/\D/g, '');
-
-        // If the number starts with 639, replace 63 with 0
-        if (cleaned.startsWith('639')) {
-          cleaned = '0' + cleaned.slice(2);
-        }
-
-        // Ensure that the number is 11 digits long and starts with 09
-        if (cleaned.length === 11 && cleaned.startsWith('09')) {
-          return cleaned;
-        } else {
-          // Handle invalid number
-          return false
+        if (cleaned.startsWith('639')) cleaned = '0' + cleaned.slice(2);
+        
+        if (cleaned.length === 11 && cleaned.startsWith('09')) return cleaned
+        else { 
           throw new Error('Invalid mobile number format');
+          return false
         }
       }
-      let thread = [
-        {
-          question: "Type the phone number you're going to use in sending payment. (e.g 09XXXXXXXXX)",
-          answer: '',
-        },
-      ]
+      
+      // Create thread
+      let thread = [ { question: "Type the phone number you're going to use in sending payment.\n-# format: 09XXXXXXXXX", answer: '', }, ]
+      const filter = m => m.author.id === inter.user.id;
+      
       let row = new MessageActionRow().addComponents(
         new MessageButton().setCustomId('autopay-'+inter.user.id).setStyle('SECONDARY').setLabel('Retry'),
       );
-      const filter = m => m.author.id === inter.user.id;
+      
+      //Get response
       async function getResponse(data) {
         await inter.channel.send(data.question)
         let msg = await inter.channel.awaitMessages({ filter, max: 1,time: 900000 ,errors: ['time'] })
@@ -311,49 +309,45 @@ client.on("interactionCreate", async (inter) => {
         msg = msg?.first()
         data.answer = msg.content
       }
+      
+      // Validate remembered phone
       let phone = await phoneModel.findOne({userId: inter.user.id})
       if (phone) {
-        await inter.channel.send({content: emojis.check+" I remembered your phone number. `"+phone.number+"`\n\nSay **OK** if you want to use this. If not, send your new phone number."})
+        await inter.channel.send({content: emojis.check+" I remembered your SIM number. `"+phone.number+"`\n\nSay **OK** if you want to use this. If not, send your new phone number."})
         let msg = await inter.channel.awaitMessages({ filter, max: 1,time: 900000 ,errors: ['time'] })
         
         msg = msg?.first()
-        if (msg.content.toLowerCase().includes('ok')) {
-          thread[0].answer = phone.number
-        } else {
-          thread[0].answer = msg.content
-        }
+        if (msg.content.toLowerCase().includes('ok')) thread[0].answer = phone.number
+        else thread[0].answer = msg.content
       }
+      
       for (let i in thread) {
         let data = thread[i]
-        if (data.answer == "") {
-          await getResponse(data)
-        }
+        if (data.answer == "") await getResponse(data)
       }
-      let num = normalizeMobileNumber(thread[0].answer)
-      if (!num) return inter.channel.send({content: "Invalid phone number: `"+thread[0].answer+"`\nMake sure the format is correct.", components: [row]})
-      let amount = Number(thread[1].answer)
-      if (isNaN(amount)) return inter.channel.send({content: "Invalid amount: `"+thread[0].answer+"`\nMake sure the format is correct.", components: [row]})
       
+      let num = normalizeMobileNumber(thread[0].answer)
+      
+      if (!num) return inter.channel.send({content: emojis.warning+" Invalid phone number: `"+thread[0].answer+"`\nMake sure the format is correct.", components: [row]})
+      
+      // Create phone data
       if (!phone) {
         let phone = new phoneModel(phoneSchema)
         phone.userId = inter.user.id
         phone.number = num
         await phone.save()
-      } else if (phone) {
+      }
+      // Update existing data
+      else if (phone) {
         phone.number = num
         await phone.save()
       }
+      // Insert shop data
       let foundShopData = shop.expected.find(i => i.channel == inter.channel.id)
-      if (!foundShopData) {
-        shop.expected.push({channel: inter.channel.id, amount: amount, num: num})
-      } else if (foundShopData) {
-        foundShopData.amount = amount
-        foundShopData.num = num
-      }
-      let responder = shop.ar.responders.find(res => '.gcash' === shop.ar.prefix+res.command)
-      if (responder) {
-        await inter.channel.send({content: emojis.loading+" send your payment here :\n\n\<a:yl_exclamationan:1138705076395978802> **gcash**\n\<:indent:1174738613330788512> 0945-986-8489 [ **R. I.** ]\n\n-# Number: `"+num+"`\n-# Expected Amount: `"+thread[1].answer+"`", embeds: responder.embed ? [responder.embed] : [], files: responder.files ? responder.files : [], components: responder.components ? [responder.components] : []})
-      }
+      if (!foundShopData) shop.expected.push({channel: inter.channel.id, num: num})
+      else if (foundShopData) foundShopData.num = num
+      
+      
     }
     else if (id.startsWith("reply-")) {
       let reply = id.replace("reply-", "");
@@ -369,14 +363,15 @@ app.get('/gcash', async function (req, res) {
   
   let text = req.query.text.length > 0 ? req.query.text : req.query.bigtext
   let username = req.query.user
-  let password = req.query.log
+  let log = req.query.log
   let accessUser = process.env[username]
-  if (!accessUser || !password) return res.status(404).send({error: "No user or pass data."})
+  let logChannel = await getChannel(log)
+  if (!accessUser || !log) return res.status(404).send({error: "No user or log data."})
   
-  if (accessUser !== password) {
-    console.log("Invalid password")
+  if (accessUser !== log) {
+    console.log("Invalid log channel")
     console.log(req.query)
-    return res.status(404).send({error: 'Invalid password!'})
+    return res.status(404).send({error: 'Invalid log channel!'})
   }
   
   
@@ -391,8 +386,6 @@ app.get('/gcash', async function (req, res) {
     senderNumber: args[lastIndex-1].replace('.',''),
     amount: Number(args[4]),
   }
-  
-  let channel = await getChannel(shop.channels.smsReader)
   
   if (data.body.startsWith('You have received')) {
     res.status(200).send({success: 'Transaction Received'})
@@ -412,7 +405,7 @@ app.get('/gcash', async function (req, res) {
         inline: true,
       },
     )
-    .setFooter({text: "Thank you for using auto pay"})
+    .setFooter({text: "Thank you for using auto pay!"})
     .setColor(colors.none)
     
     for (let i in shop.expected) {
@@ -436,7 +429,7 @@ app.get('/gcash', async function (req, res) {
       }
     }
     
-    await channel.send({content: '@everyone '+emojis.check+' New Transaction ('+data.senderNumber+')', embeds: [embed]})
+    await logChannel.send({content: '@everyone '+emojis.check+' New Transaction ('+data.senderNumber+')', embeds: [embed]})
   }
   
 });
