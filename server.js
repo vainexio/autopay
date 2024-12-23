@@ -79,8 +79,9 @@ client.on("ready", async () => {
       number: String,
     })
     
-    serverSchema = new new mongoose.Schema({
+    serverSchema = new mongoose.Schema({
       id: String,
+      
     })
     
     phoneModel = mongoose.model("SloopiePhone", phoneSchema);
@@ -207,6 +208,13 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   //Checker
   if (message.channel.type === "DM") return;
+  
+  if (message.content.toLowerCase().startsWith('.gcash')) {
+    let row = new MessageActionRow().addComponents(
+      new MessageButton().setCustomId('autopay-'+message.guild.id).setStyle('SUCCESS').setLabel('Yes'),
+    );
+    await message.channel.send({content: "** **\n<:gcash:1273091410228150276> Would you like to auto pay with GCash?\n-# GCash may have delays. If the payment was not validated, please send the receipt instead.\n** **", components: [row]})
+  }
 }); //END MESSAGE CREATE
 
 let yay = true
@@ -277,8 +285,12 @@ client.on("interactionCreate", async (inter) => {
   else if (inter.isButton() || inter.isSelectMenu()) {
     let id = inter.customId;
     if (id.startsWith('autopay-')) {
-      let userId = id.replace('autopay-','')
+      let serverId = id.replace('autopay-','')
       
+      let serverData = await serverModel.findOne({id: serverId})
+      if (serverData) {
+        
+      }
       await inter.update({components: []})
       
       // Normalize number
@@ -287,7 +299,7 @@ client.on("interactionCreate", async (inter) => {
         if (cleaned.startsWith('639')) cleaned = '0' + cleaned.slice(2);
         
         if (cleaned.length === 11 && cleaned.startsWith('09')) return cleaned
-        else { 
+        else {
           throw new Error('Invalid mobile number format');
           return false
         }
