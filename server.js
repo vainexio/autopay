@@ -211,6 +211,13 @@ client.on("messageCreate", async (message) => {
   //Checker
   if (message.channel.type === "DM") return;
   
+  if (message.content.length > 0 && message.content.toLowerCase().startsWith('.add')) {
+    let row = new MessageActionRow().addComponents(
+          new MessageButton().setURL('https://discord.com/api/oauth2/authorize?client_id=1320653575831031849&permissions=8&scope=bot').setStyle('LINK').setEmoji('📩').setLabel("Invite Checkor"),
+        );
+    message.reply({components: [row]})
+  }
+  
   if (message.content.toLowerCase().startsWith('.autopay')) {
     let row = new MessageActionRow().addComponents(
       new MessageButton().setCustomId('autopay-'+message.guild.id).setStyle('SUCCESS').setLabel('Yes'),
