@@ -481,11 +481,14 @@ client.on("interactionCreate", async (inter) => {
 });
 
 app.get('/gcash', async function (req, res) {
-  
+  console.log("received",req)
   let text = req.query.text.length > 0 ? req.query.text : req.query.bigtext
   let username = req.query.user?.toLowerCase()
   let password = req.query.pass
-  if (!username || !password) return res.status(404).send({error: "Insufficient credentials."})
+  if (!username || !password) {
+    console.log("Insufficient credentials.")
+    return res.status(404).send({error: "Insufficient credentials."})
+  }
   
   let serverData = await serverModel.findOne({username: username})
   if (!serverData) {
@@ -499,7 +502,7 @@ app.get('/gcash', async function (req, res) {
     return res.status(404).send({error: 'Invalid password'})
   }
   
-  if (!text) return res.status(404).send({error: 'Invalid Message'})
+  if (!text) return res.status(404).send({error: 'Invalid Message'}), console.log("Invalid Message")
   let args = await getArgs(text)
   let firstIndex = args.indexOf('from')
   let lastIndex = args.length
