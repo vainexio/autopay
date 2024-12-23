@@ -481,7 +481,7 @@ client.on("interactionCreate", async (inter) => {
 });
 
 app.get('/gcash', async function (req, res) {
-  console.log("received",req)
+  console.log("received",req.query)
   let text = req.query.text.length > 0 ? req.query.text : req.query.bigtext
   let username = req.query.user?.toLowerCase()
   let password = req.query.pass
