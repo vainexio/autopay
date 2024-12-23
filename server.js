@@ -207,22 +207,20 @@ let expCodes = [];
 let nitroCodes = []
 client.on("messageCreate", async (message) => {
   //
+  if (message.channel.type === "DM") return;
+  if (message.content.toLowerCase().startsWith('.autopay') && message.author.id !== client.user.id) {
+    let row = new MessageActionRow().addComponents(
+      new MessageButton().setCustomId('autopay-'+message.guild.id).setStyle('SUCCESS').setLabel('Yes'),
+    );
+    await message.channel.send({content: "** **\n<:gcash:1273091410228150276> Would you like to auto pay with GCash?\n-# GCash may have delays. If the payment was not validated, please send the receipt instead.\n** **", components: [row]})
+  }
   if (message.author.bot) return;
   //Checker
-  if (message.channel.type === "DM") return;
-  
   if (message.content.length > 0 && message.content.toLowerCase().startsWith('.add')) {
     let row = new MessageActionRow().addComponents(
           new MessageButton().setURL('https://discord.com/api/oauth2/authorize?client_id=1320653575831031849&permissions=8&scope=bot').setStyle('LINK').setEmoji('📩').setLabel("Invite Boty"),
         );
     message.reply({components: [row]})
-  }
-  
-  if (message.content.toLowerCase().startsWith('.autopay')) {
-    let row = new MessageActionRow().addComponents(
-      new MessageButton().setCustomId('autopay-'+message.guild.id).setStyle('SUCCESS').setLabel('Yes'),
-    );
-    await message.channel.send({content: "** **\n<:gcash:1273091410228150276> Would you like to auto pay with GCash?\n-# GCash may have delays. If the payment was not validated, please send the receipt instead.\n** **", components: [row]})
   }
 }); //END MESSAGE CREATE
 
@@ -516,7 +514,6 @@ app.get('/gcash', async function (req, res) {
   
   if (data.body.startsWith('You have received')) {
     res.status(200).send({success: 'Transaction Received'})
-    console.log('Data: '+username,data)
     
     //Send log
     let embed = new MessageEmbed()
