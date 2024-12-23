@@ -440,7 +440,7 @@ client.on("interactionCreate", async (inter) => {
       .replace('{num}',num)
       
       let comp = new MessageActionRow().addComponents(
-        new MessageButton().setCustomId('reply-09459868489').setStyle('SECONDARY').setEmoji(emojis.offline).setLabel("copy number")
+        new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji(emojis.offline).setLabel("copy number")
           );
       await inter.channel.send({content: content, components: [comp]})
     }
