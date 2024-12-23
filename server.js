@@ -81,6 +81,7 @@ client.on("ready", async () => {
     serverSchema = new mongoose.Schema({
       id: String,
       username: String,
+      password: String,
       logChannel: String,
       myGcash: {
         number: String,
@@ -285,6 +286,57 @@ client.on("interactionCreate", async (inter) => {
         await inter.editReply({content: emojis.warning+' Unexpected Error Occurred\n```diff\n- '+err+'```'})
       }
     }
+    else if (cname === 'register') {
+      if (!await getPerms(inter.member,2)) return inter.reply({content: emojis.warning+" You are not on the whitelist"});
+      let options = inter.options._hoistedOptions
+      //
+      let server_id = options.find(a => a.name === 'server_id')
+      let username = options.find(a => a.name === 'username')
+      let password = options.find(a => a.name === 'password')
+      let gcash_num = options.find(a => a.name === 'gcash_num')
+      let gcash_initials = options.find(a => a.name === 'gcash_initials')
+      let log_channel_id = options.find(a => a.name === 'log_channel_id')
+      
+      let guild = await getGuild(server_id.value)
+      
+      if (!guild) return inter.reply({content: emojis.warning+' Cannot find guild. Make sure that the bot is on the server that you wish to register'})
+      if (!await guildPerms(await getMember(inter.user.id,guild),["MANAGE_GUILD"])) return inter.reply({content: emojis.warning+' You must have the **MANAGE SERVER** permission in the server that you want to register'})
+      
+      let doc = await serverModel.findOne({id: guild.id})
+      if (doc) return inter.reply({content: emojis.warning+' This guild was already registered'})
+      
+      let docAuthor = await serverModel.findOne({username: username.value})
+      if (docAuthor) return inter.reply({content: emojis.warning+' A server with this username is already registered!'})
+      
+      let logChannel = await getChannel(log_channel_id.value)
+      if (!logChannel) return inter.reply({content: emojis.warning+' Log channel ID was not found!'})
+      
+      let newDoc = new serverModel(serverSchema)
+      newDoc.id = guild.id
+      newDoc.username = username.value
+      newDoc.password = password.value
+      newDoc.logChannel = log_channel_id.value
+      newDoc.myGcash.number = gcash_num.value
+      newDoc.myGcash.initials = gcash_initials.value
+      await newDoc.save()
+      
+      await inter.reply({content: emojis.on+" Your guild was registered"})
+      
+      let embed = new MessageEmbed()
+      .addFields(
+        {name: "Generated Key", value: "This key was generated for the first time. Make sure you save it."},
+        {name: "Data", value: "Guild ID `"+guild.id+"`\nGuild Name `"+guild.name+"`"}
+      )
+      .setColor(theme)
+      
+      await inter.user.send({content: newDoc.key, embeds: [embed], ephemeral: true})
+        .then(msg => inter.followUp({content: emojis.check+' Your access key has been sent via direct message'}))
+        .catch(async err => {
+        console.log(err)
+        inter.followUp({content: emojis.warning+' Unable to send access key via direct message\n```diff\n-'+err+'```'})
+        await guildModel.deleteOne({key: newDoc.key})
+      })
+    }
   }
   else if (inter.isButton() || inter.isSelectMenu()) {
     let id = inter.customId;
@@ -384,16 +436,17 @@ client.on("interactionCreate", async (inter) => {
 app.get('/gcash', async function (req, res) {
   
   let text = req.query.text.length > 0 ? req.query.text : req.query.bigtext
-  let username = req.query.user
-  let log = req.query.log
-  let accessUser = process.env[username]
-  let logChannel = await getChannel(log)
-  if (!accessUser || !log) return res.status(404).send({error: "No user or log data."})
+  let username = req.query.user?.toLowerCase()
+  let password = req.query.pass
+  if (!username || !password) return res.status(404).send({error: "Insufficient credentials."})
   
-  if (accessUser !== log) {
-    console.log("Invalid log channel")
+  let serverData = await serverModel.findOne({username: username})
+  if (!serverData) return res.status(404).send({error: "No server data found with username: "+username})
+  
+  if (serverData.password !== password) {
+    console.log("Invalid password")
     console.log(req.query)
-    return res.status(404).send({error: 'Invalid log channel!'})
+    return res.status(404).send({error: 'Invalid password'})
   }
   
   if (!text) return res.status(404).send({error: 'Invalid Message'})
@@ -410,7 +463,7 @@ app.get('/gcash', async function (req, res) {
   
   if (data.body.startsWith('You have received')) {
     res.status(200).send({success: 'Transaction Received'})
-    console.log('Data; '+username,data)
+    console.log('Data: '+username,data)
     
     //Send log
     let embed = new MessageEmbed()
@@ -449,8 +502,8 @@ app.get('/gcash', async function (req, res) {
         return;
       }
     }
-    
-    await logChannel.send({content: '@everyone '+emojis.check+' New Transaction ('+data.senderNumber+')', embeds: [embed]})
+    let logChannel = await getChannel(serverData.logChannel)
+    await logChannel.send({content: ''+emojis.check+' New Transaction ('+data.senderNumber+')', embeds: [embed]})
   }
   
 });

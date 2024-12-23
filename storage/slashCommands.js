@@ -21,12 +21,55 @@ module.exports = {
       description: "Set your GCash phone number",
       options: [
         { 
-          name: 'number', type: 6, required: true,
+          name: 'number', type: 3, required: true,
           description: 'Phone number'
         },
         { 
-          name: 'initials', type: 6, required: true,
+          name: 'initials', type: 3, required: true,
           description: 'Account initials'
+        },
+      ]
+    },
+    {
+      "name": "register",
+      "type": 1,
+      "description": "Register your server for auto payment",
+      "options": [
+        {
+          "name": 'server_id',
+          "description": 'Server ID',
+          "type": 3,
+          "required": true,
+        },
+        {
+          "name": 'username',
+          "description": 'Username',
+          "type": 3,
+          "required": true,
+        },
+        {
+          "name": 'password',
+          "description": 'Password',
+          "type": 3,
+          "required": true,
+        },
+        {
+          "name": 'gcash_num',
+          "description": 'GCash number',
+          "type": 3,
+          "required": true,
+        },
+        {
+          "name": 'gcash_initials',
+          "description": 'GCash Account Initials',
+          "type": 3,
+          "required": true,
+        },
+        {
+          "name": 'log_channel_id',
+          "description": 'Log channel ID',
+          "type": 3,
+          "required": true,
         },
       ]
     },
