@@ -66,15 +66,15 @@ module.exports = {
     bot: {
       status: [
         {
-          status: "idle", //online, idle, dnd
+          status: "online", //online, idle, dnd
           activities: [
-            { name: "u", type: "Watching".toUpperCase(), //playing, watching, listening only
+            { name: "receipts", type: "Watching".toUpperCase(), //playing, watching, listening only
             }, ], 
         },
         {
-          status: "idle", //online, idle, dnd
+          status: "online", //online, idle, dnd
           activities: [
-            { name: "u", type: "Watching".toUpperCase(), //playing, watching, listening only
+            { name: "payments", type: "Watching".toUpperCase(), //playing, watching, listening only
             }, ], 
         },
       ]

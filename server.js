@@ -213,7 +213,7 @@ client.on("messageCreate", async (message) => {
   
   if (message.content.length > 0 && message.content.toLowerCase().startsWith('.add')) {
     let row = new MessageActionRow().addComponents(
-          new MessageButton().setURL('https://discord.com/api/oauth2/authorize?client_id=1320653575831031849&permissions=8&scope=bot').setStyle('LINK').setEmoji('📩').setLabel("Invite Checkor"),
+          new MessageButton().setURL('https://discord.com/api/oauth2/authorize?client_id=1320653575831031849&permissions=8&scope=bot').setStyle('LINK').setEmoji('📩').setLabel("Invite Boty"),
         );
     message.reply({components: [row]})
   }
