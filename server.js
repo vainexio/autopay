@@ -326,6 +326,7 @@ client.on("interactionCreate", async (inter) => {
       let password = options.find(a => a.name === 'password')
       
       let doc = await serverModel.findOne({username: username.value})
+      if (!doc) return inter.reply({content: emojis.warning+" This server is not registered!"})
       let guild = await getGuild(doc.id)
       
       if (doc && doc.password == password.value) {
