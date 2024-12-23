@@ -310,7 +310,7 @@ client.on("interactionCreate", async (inter) => {
       
       let newDoc = new serverModel(serverSchema)
       newDoc.id = guild.id
-      newDoc.username = username.value
+      newDoc.username = username.value.toLowerCase()
       newDoc.password = password.value
       newDoc.logChannel = log_channel_id.value
       newDoc.myGcash.number = gcash_num.value
@@ -465,7 +465,7 @@ client.on("interactionCreate", async (inter) => {
     }
     else if (id.startsWith("reply-")) {
       let reply = id.replace("reply-", "");
-      inter.reply({ content: "*" + reply + "*", ephemeral: true });
+      inter.reply({ content: reply, ephemeral: true });
     } 
     else if (id.startsWith("none")) {
       inter.deferUpdate();
