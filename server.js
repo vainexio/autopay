@@ -89,7 +89,7 @@ client.on("ready", async () => {
       }
     })
     
-    phoneModel = mongoose.model("SloopiePhone", phoneSchema);
+    phoneModel = mongoose.model("SloopiePhone2", phoneSchema);
     serverModel = mongoose.model("SeverPhoneModel", serverSchema);
   }
   //
@@ -180,15 +180,12 @@ async function getPerms(member, level) {
 
   if (highestPerms) return highestPerms;
 }
-async function guildPerms(message, perms) {
-  //console.log(Permissions.FLAGS)
-  if (message.member.permissions.has(perms)) return true
-  
-  let embed = new MessageEmbed()
-  .addFields({name: "Insufficient Permissions",value: "You don't have the required server permissions to use this command.\n\n`"+perms.toString().toUpperCase()+"`"})
-  .setColor(colors.red);
-  
-  message.channel.send({ embeds: [embed] });
+async function guildPerms(member, perms) {
+  if (member.permissions.has(perms)) {
+    return true;
+  } else {
+    return false
+  }
 }
 function noPerms(message) {
   let Embed = new MessageEmbed()
@@ -214,7 +211,7 @@ client.on("messageCreate", async (message) => {
   //Checker
   if (message.channel.type === "DM") return;
   
-  if (message.content.toLowerCase().startsWith('.gcash')) {
+  if (message.content.toLowerCase().startsWith('.autopay')) {
     let row = new MessageActionRow().addComponents(
       new MessageButton().setCustomId('autopay-'+message.guild.id).setStyle('SUCCESS').setLabel('Yes'),
     );
@@ -429,12 +426,12 @@ client.on("interactionCreate", async (inter) => {
       let templates = await getChannel(shop.channels.templates)
       let foundMsg = await templates.messages.fetch('1320650204046688257')
       
-      foundMsg.content
+      let content = foundMsg.content
       .replace('{myGcash}',serverData.myGcash.number)
       .replace('{initials}',serverData.myGcash.initials)
       .replace('{num}',num)
       
-      await inter.channel.send(foundMsg.content)
+      await inter.channel.send(content)
     }
     else if (id.startsWith("unregisPrompt-")) {
       let userId = id.replace('unregisPrompt-','')

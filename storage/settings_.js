@@ -101,13 +101,13 @@ module.exports = {
   colors: colors,
   theme: colors.none,
   emojis: {
-    check: "✅",
-    x: "❌",
-    loading: "⌛",
+    check: '<a:CHECK:1138778694983356450>',
+    x: '<a:Xmark:1138778760628424735>',
+    loading: '<a:Loading:1138778730785943614>',
     nboost: '<:boost:1248993578181726269>',
     nclasic: '<a:classic:1248921754097815572>',
     nbasic: '<:basic:1248921754097815572>',
-    warning: '⚠️',
+    warning: '<:S_warning:1108743925012902049>',
   },
   commands: [
     //
