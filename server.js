@@ -363,7 +363,6 @@ client.on("interactionCreate", async (inter) => {
       let serverData = await serverModel.findOne({id: serverId})
       if (!serverData) return await inter.reply({content: emojis.warning+" No server data."})
       await inter.update({components: []})
-      
       // Normalize number
       function normalizeMobileNumber(input) {
         let cleaned = input.replace(/\D/g, '');
