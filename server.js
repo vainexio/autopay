@@ -548,8 +548,6 @@ app.get('/gcash', async function (req, res) {
       if (!cd) shop.expected.splice(i,1)
     }
     
-    console.log(shop.expected)
-    
     for (let i in shop.expected) {
       
       let transac = shop.expected[i]
