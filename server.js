@@ -363,6 +363,11 @@ client.on("interactionCreate", async (inter) => {
       let serverData = await serverModel.findOne({id: serverId})
       if (!serverData) return await inter.reply({content: emojis.warning+" No server data."})
       await inter.update({components: []})
+      
+      let row = new MessageActionRow().addComponents(
+        new MessageButton().setCustomId('autopay-'+inter.user.id).setStyle('SECONDARY').setLabel('Retry'),
+      );
+      
       // Normalize number
       function normalizeMobileNumber(input) {
         let cleaned = input.replace(/\D/g, '');
@@ -370,8 +375,7 @@ client.on("interactionCreate", async (inter) => {
         
         if (cleaned.length === 11 && cleaned.startsWith('09')) return cleaned
         else {
-          throw new Error('Invalid mobile number format');
-          return false
+          return inter.channel.send({content: emojis.warning+" Invalid phone number: `"+input+"`\nMake sure the format is correct.", components: [row]})
         }
       }
       
@@ -379,17 +383,23 @@ client.on("interactionCreate", async (inter) => {
       let thread = [ { question: "Type the phone number you're going to use in sending payment.\n-# Correct format: 09XXXXXXXXX", answer: '', }, ]
       const filter = m => m.author.id === inter.user.id;
       
-      let row = new MessageActionRow().addComponents(
-        new MessageButton().setCustomId('autopay-'+inter.user.id).setStyle('SECONDARY').setLabel('Retry'),
-      );
-      
       //Get response
       async function getResponse(data) {
-        await inter.channel.send(data.question)
-        let msg = await inter.channel.awaitMessages({ filter, max: 1,time: 900000 ,errors: ['time'] })
-        
-        msg = msg?.first()
-        data.answer = msg.content
+        try {
+          await inter.channel.send(data.question);
+          let msg = await inter.channel.awaitMessages({ 
+            filter, 
+            max: 1, 
+            time: 900000, // 15 minutes
+            errors: ['time'] 
+          });
+
+          msg = msg?.first();
+          data.answer = msg.content;
+        } catch (error) {
+          // Handle timeout error
+          await inter.channel.send({content: `${emojis.warning} No message was collected. The interaction expired.`,components: [row]});
+        }
       }
       
       // Validate remembered phone
