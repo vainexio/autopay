@@ -365,7 +365,7 @@ client.on("interactionCreate", async (inter) => {
       await inter.update({components: []})
       
       let row = new MessageActionRow().addComponents(
-        new MessageButton().setCustomId('autopay-'+inter.user.id).setStyle('SECONDARY').setLabel('Retry'),
+        new MessageButton().setCustomId('autopay-'+inter.guild.id).setStyle('SECONDARY').setLabel('Retry'),
       );
       
       // Normalize number
