@@ -375,7 +375,8 @@ client.on("interactionCreate", async (inter) => {
         
         if (cleaned.length === 11 && cleaned.startsWith('09')) return cleaned
         else {
-          return inter.channel.send({content: emojis.warning+" Invalid phone number: `"+input+"`\nMake sure the format is correct.", components: [row]})
+          //inter.channel.send({content: emojis.warning+" Invalid phone number: `"+input+"`\nMake sure the format is correct.", components: [row]})
+          return false;
         }
       }
       
