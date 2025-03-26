@@ -454,11 +454,18 @@ client.on("interactionCreate", async (inter) => {
       .replace('{amount}',amount.toString())
       
       let comp = new MessageActionRow().addComponents(
-        new MessageButton().setCustomId('generatePlain-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji(emojis.offline).setLabel("Generate Plain QR")
+        new MessageButton().setCustomId('generatePlain-'+amount).setStyle('PRIMARY').setEmoji('<:gcash:1259786703816622121>').setLabel("Show Plain QR")
       );
-      let qrCode = await generateQr(amount)
+      let qrCode = await generateQr(amount,false)
       console.log(qrCode)
-      await inter.channel.send({content: content, files: [qrCode.image]}) //, components: [comp]
+      await inter.channel.send({content: content, files: [qrCode.image], components: [comp]})
+    }
+    else if (id.startsWith("generatePlain-")) {
+      let amount = id.replace('generatePlain-','')
+      await inter.deferReply({ephemeral: true})
+      let qrCode = await generateQr(amount,true)
+      console.log(qrCode)
+      await inter.reply({files: [qrCode.image]})
     }
     else if (id.startsWith("unregisPrompt-")) {
       let userId = id.replace('unregisPrompt-','')
