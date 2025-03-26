@@ -69,7 +69,8 @@ module.exports = {
     name = cutString(name)
     console.log(name)
     let digitIndicator =
-      amount >= 1000 ? "7"
+      amount >= 10000 ? "8"
+      : amount >= 1000 ? "7"
       : amount >= 100 ? "6"
       : amount >= 10 ? "5"
       : amount >= 1 ? "4"
