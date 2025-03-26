@@ -209,8 +209,9 @@ client.on("messageCreate", async (message) => {
   //
   if (message.channel.type === "DM") return;
   if (message.content.toLowerCase().startsWith('.autopay') && message.author.id !== client.user.id) {
+    let args = await getArgs(message.content)
     let row = new MessageActionRow().addComponents(
-      new MessageButton().setCustomId('autopay-'+message.guild.id).setStyle('SUCCESS').setLabel('Yes'),
+      new MessageButton().setCustomId('autopay-'+message.guild.id+"_"+args[1]).setStyle('SUCCESS').setLabel('Yes'),
     );
     await message.channel.send({content: "** **\n<:gcash:1273091410228150276> Would you like to auto pay with GCash?\n-# GCash may have delays. If the payment was not validated, please send the receipt instead.\n** **", components: [row]})
     await message.delete();
@@ -358,8 +359,10 @@ client.on("interactionCreate", async (inter) => {
   else if (inter.isButton() || inter.isSelectMenu()) {
     let id = inter.customId;
     if (id.startsWith('autopay-')) {
-      let serverId = id.replace('autopay-','')
-      
+      let data = await getArgs(id.replace('autopay-','').replace(/_/g,' '))
+      let serverId = data[0]
+      let amount = Number(data[1])
+      if (isNaN(amount)) return 
       let serverData = await serverModel.findOne({id: serverId})
       if (!serverData) return await inter.reply({content: emojis.warning+" No server data."})
       await inter.update({components: []})
@@ -437,7 +440,7 @@ client.on("interactionCreate", async (inter) => {
       }
       // Insert shop data
       let foundShopData = shop.expected.find(i => i.channel == inter.channel.id)
-      if (!foundShopData) shop.expected.push({channel: inter.channel.id, num: num, myGcash: serverData.myGcash.number})
+      if (!foundShopData) shop.expected.push({channel: inter.channel.id, num: num, myGcash: serverData.myGcash.number, amount: amount})
       else if (foundShopData) foundShopData.num = num
       
       let templates = await getChannel(shop.channels.templates)
