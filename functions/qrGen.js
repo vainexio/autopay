@@ -99,7 +99,7 @@ module.exports = {
         gradientColor2: null,
         gradientType: "linear",
         gradientOnEyes: false,
-        logo: "172a893222def080bd5235c0e5029f1433a5269b.png.pay",
+        logo: "https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/pio.png",
         logoMode: "default",
       },
       size: 500,
