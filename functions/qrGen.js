@@ -77,34 +77,7 @@ module.exports = {
 
     let config = {
       data: generatedQr,
-      config: {
-        body: "square",
-        eye: "frame0",
-        eyeBall: "ball0",
-        erf1: [],
-        erf2: [],
-        erf3: [],
-        brf1: [],
-        brf2: [],
-        brf3: [],
-        bodyColor: "#000000",
-        bgColor: "#FFFFFF",
-        eye1Color: "#000000",
-        eye2Color: "#000000",
-        eye3Color: "#000000",
-        eyeBall1Color: "#000000",
-        eyeBall2Color: "#000000",
-        eyeBall3Color: "#000000",
-        gradientColor1: null,
-        gradientColor2: null,
-        gradientType: "linear",
-        gradientOnEyes: false,
-        logo: "https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/pio.png",
-        logoMode: "default",
-      },
-      size: 500,
-      download: "imageUrl",
-      file: "png",
+      "config":{"body":"square","eye":"frame2","eyeBall":"ball0","erf1":["fv"],"erf2":[],"erf3":[],"brf1":[],"brf2":[],"brf3":[],"bodyColor":"#FFFB00","bgColor":"#2e2e34","eye1Color":"#FFFFFF","eye2Color":"#FFFFFF","eye3Color":"#FFFFFF","eyeBall1Color":"#FFFFFF","eyeBall2Color":"#FFFFFF","eyeBall3Color":"#FFFFFF","gradientColor1":"#EFFFAD","gradientColor2":"#6DCBFF","gradientType":"linear","gradientOnEyes":false,"logo":"https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/pio.png","logoMode":"default"},"size":500,"download":"imageUrl","file":"png"
     };
     let data = {
       method: "POST",
@@ -119,5 +92,22 @@ module.exports = {
     let imageUrl = "https:" + qrCode.imageUrl;
 
     return { image: imageUrl, raw: generatedQr };
+  },
+  generatePlain: async function (qrCode) {
+
+    let config = {"data":qrCode,"config":{"body":"square","eye":"frame2","eyeBall":"ball0","erf1":["fv"],"erf2":[],"erf3":[],"brf1":[],"brf2":[],"brf3":[],"bodyColor":"#000000","bgColor":"#FFFFFF","eye1Color":"#000000","eye2Color":"#000000","eye3Color":"#000000","eyeBall1Color":"#000000","eyeBall2Color":"#000000","eyeBall3Color":"#000000","gradientColor1":"","gradientColor2":"","gradientType":"linear","gradientOnEyes":"true","logo":"https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/pio.png","logoMode":"default"},"size":500,"download":"imageUrl","file":"png"}
+    let data = {
+      method: "POST",
+      body: JSON.stringify(config),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    let newQr = await fetch("https://api.qrcode-monkey.com//qr/custom", data);
+    newQr = await newQr.json();
+    console.log(newQr)
+    let imageUrl = "https:" + newQr.imageUrl;
+
+    return { image: imageUrl, raw: qrCode };
   },
 };
