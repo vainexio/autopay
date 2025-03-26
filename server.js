@@ -456,14 +456,15 @@ client.on("interactionCreate", async (inter) => {
       let comp = new MessageActionRow().addComponents(
         new MessageButton().setCustomId('generatePlain-'+amount).setStyle('PRIMARY').setEmoji('<:gcash:1259786703816622121>').setLabel("Show Plain QR")
       );
-      let qrCode = await generateQr(amount,false)
+      let qrCode = await generateQr(amount,"For "+inter.user.globalName,false)
+      console.log(inter.member)
       console.log(qrCode)
       await inter.channel.send({content: content, files: [qrCode.image], components: [comp]})
     }
     else if (id.startsWith("generatePlain-")) {
       let amount = id.replace('generatePlain-','')
       await inter.update({components: []})
-      let qrCode = await generateQr(Number(amount),true)
+      let qrCode = await generateQr(Number(amount),"For "+inter.user.username,true)
       console.log(qrCode)
       await inter.followUp({content: "-# This message is sent only once.", files: [qrCode.image], ephemeral: true})
     }

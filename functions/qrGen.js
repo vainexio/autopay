@@ -26,6 +26,12 @@ const {
   MessageButton,
   MessageSelectMenu,
 } = Discord;
+function cutString(inputString) {
+  if (inputString.length > 10) {
+    return inputString.slice(0, 9) + '—';
+  }
+  return inputString.slice(0, 10);
+}
 
 function crc16Ccitt(data) {
   let crc = 0xffff;
@@ -57,22 +63,16 @@ function generateQrCRC(qrData) {
 }
 
 module.exports = {
-  generateQr: async function (amount,plain) {
+  generateQr: async function (amount,name,plain) {
+    name = cutString(name)
     let digitIndicator =
-      amount >= 1000
-        ? "7"
-        : amount >= 100
-        ? "6"
-        : amount >= 10
-        ? "5"
-        : amount >= 1
-        ? "4"
-        : "Unknown";
+      amount >= 1000 ? "7"
+      : amount >= 100 ? "6"
+      : amount >= 10 ? "5"
+      : amount >= 1 ? "4"
+      : "Unknown";
     let qrData =
-      "00020101021227830012com.p2pqrpay0111GXCHPHM2XXX02089996440303152170200000006560417DWQM4TK3JDO5YAWDV520460165303608540" +
-      digitIndicator +
-      amount.toFixed(2) +
-      "5802PH5912I** PA**O I.6011San Antonio610412346304";
+      "00020101021227830012com.p2pqrpay0111GXCHPHM2XXX02089996440303152170200000006560417DWQM4TK3JDO5YAWDV520460165303608540" + digitIndicator + amount.toFixed(2) + "5802PH5912"+name+"6011San Antonio610412346304";
     let generatedQr = generateQrCRC(qrData);
     let dynamicDesign = {"body":"square","eye":"frame2","eyeBall":"ball0","erf1":["fv"],"erf2":[],"erf3":[],"brf1":[],"brf2":[],"brf3":[],"bodyColor":"#FFFB00","bgColor":"#2e2e34","eye1Color":"#FFFFFF","eye2Color":"#FFFFFF","eye3Color":"#FFFFFF","eyeBall1Color":"#FFFFFF","eyeBall2Color":"#FFFFFF","eyeBall3Color":"#FFFFFF","gradientColor1":"#EFFFAD","gradientColor2":"#6DCBFF","gradientType":"linear","gradientOnEyes":false,"logo":"https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/pio.png","logoMode":"default"}
     let plainDesign = {"body":"square","eye":"frame2","eyeBall":"ball0","erf1":["fv"],"erf2":[],"erf3":[],"brf1":[],"brf2":[],"brf3":[],"bodyColor":"#000000","bgColor":"#FFFFFF","eye1Color":"#000000","eye2Color":"#000000","eye3Color":"#000000","eyeBall1Color":"#000000","eyeBall2Color":"#000000","eyeBall3Color":"#000000","gradientColor1":"","gradientColor2":"","gradientType":"linear","gradientOnEyes":"true","logo":"https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/pio.png","logoMode":"default"}
