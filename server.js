@@ -134,7 +134,9 @@ module.exports = { client: client, getPerms, noPerms };
 let listener = app.listen(process.env.PORT, function () {
   console.log("Not that it matters but your app is listening on port ",listener.address());
 });
-
+// QR
+const qrGen = require("./functions/qrGen.js");
+const { generateQr } = qrGen;
 //Send Messages
 const sendMsg = require("./functions/sendMessage.js");
 const { safeSend, sendChannel, sendUser } = sendMsg;
@@ -362,7 +364,8 @@ client.on("interactionCreate", async (inter) => {
       let data = await getArgs(id.replace('autopay-','').replace(/_/g,' '))
       let serverId = data[0]
       let amount = Number(data[1])
-      if (isNaN(amount)) return 
+      if (isNaN(amount)) return inter.reply({content: emojis.warning+" Invalid amount."})
+      
       let serverData = await serverModel.findOne({id: serverId})
       if (!serverData) return await inter.reply({content: emojis.warning+" No server data."})
       await inter.update({components: []})
@@ -378,7 +381,6 @@ client.on("interactionCreate", async (inter) => {
         
         if (cleaned.length === 11 && cleaned.startsWith('09')) return cleaned
         else {
-          //inter.channel.send({content: emojis.warning+" Invalid phone number: `"+input+"`\nMake sure the format is correct.", components: [row]})
           return false;
         }
       }
@@ -406,7 +408,6 @@ client.on("interactionCreate", async (inter) => {
         }
       }
       
-      // Validate remembered phone
       let phone = await phoneModel.findOne({userId: inter.user.id})
       if (phone) {
         await inter.channel.send({content: emojis.check+" I remembered your SIM number. `"+phone.number+"`\n\nSay **OK** if you want to use this. If not, send your new phone number."})
@@ -450,11 +451,13 @@ client.on("interactionCreate", async (inter) => {
       .replace('{myGcash}',serverData.myGcash.number)
       .replace('{initials}',serverData.myGcash.initials)
       .replace('{num}',num)
+      .replace('{amount}',amount.toString())
       
       let comp = new MessageActionRow().addComponents(
         new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji(emojis.offline).setLabel("copy number")
-          );
-      await inter.channel.send({content: content, components: [comp]})
+      );
+      let qrCode = await generateQr(amount)
+      await inter.channel.send({content: content, files: [qrCode.image], components: [comp]})
     }
     else if (id.startsWith("unregisPrompt-")) {
       let userId = id.replace('unregisPrompt-','')
@@ -556,7 +559,7 @@ app.get('/gcash', async function (req, res) {
       
       let transac = shop.expected[i]
       
-      if (transac.num == data.senderNumber) {
+      if (transac.num == data.senderNumber && data.amount >= transac.amount) {
         let cd = await getChannel(transac.channel)
         if (!cd) return shop.expected.splice(i,1)
         await cd.send({content: emojis.check+" Payment received *!*", embeds: [embed]})
