@@ -210,7 +210,7 @@ let nitroCodes = []
 client.on("messageCreate", async (message) => {
   //
   if (message.channel.type === "DM") return;
-  if (message.content.toLowerCase().startsWith('.autopay') && message.author.id !== client.user.id) {
+  if (message.content.toLowerCase().startsWith('.pay') && message.author.id !== client.user.id) {
     let args = await getArgs(message.content)
     let row = new MessageActionRow().addComponents(
       new MessageButton().setCustomId('autopay-'+message.guild.id+"_"+args[1]).setStyle('SUCCESS').setLabel('Yes'),
@@ -371,7 +371,7 @@ client.on("interactionCreate", async (inter) => {
       await inter.update({components: []})
       
       let row = new MessageActionRow().addComponents(
-        new MessageButton().setCustomId('autopay-'+inter.guild.id).setStyle('SECONDARY').setLabel('Retry'),
+        new MessageButton().setCustomId('autopay-'+inter.guild.id+"_"+amount).setStyle('SECONDARY').setLabel('Retry'),
       );
       
       // Normalize number
@@ -458,7 +458,7 @@ client.on("interactionCreate", async (inter) => {
       );
       let qrCode = await generateQr(amount)
       console.log(qrCode)
-      await inter.channel.send({content: content, files: [qrCode.image], components: [comp]})
+      await inter.channel.send({content: content, files: [qrCode.image]}) //, components: [comp]
     }
     else if (id.startsWith("unregisPrompt-")) {
       let userId = id.replace('unregisPrompt-','')
