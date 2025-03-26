@@ -462,10 +462,10 @@ client.on("interactionCreate", async (inter) => {
     }
     else if (id.startsWith("generatePlain-")) {
       let amount = id.replace('generatePlain-','')
-      await inter.deferReply({ephemeral: true})
-      let qrCode = await generateQr(amount,true)
+      await inter.update({components: []})
+      let qrCode = await generateQr(Number(amount),true)
       console.log(qrCode)
-      await inter.reply({files: [qrCode.image]})
+      await inter.followUp({content: "-# This message is sent only once.", files: [qrCode.image], ephemeral: true})
     }
     else if (id.startsWith("unregisPrompt-")) {
       let userId = id.replace('unregisPrompt-','')
