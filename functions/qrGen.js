@@ -83,7 +83,7 @@ module.exports = {
     let config = {
       data: generatedQr,
       "config": design,
-      "size": 300,
+      "size": 250,
       "download":"imageUrl",
       "file":"png"
     };
