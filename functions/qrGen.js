@@ -28,7 +28,7 @@ const {
 } = Discord;
 function cutString(inputString) {
   if (inputString.length > 10) {
-    return inputString.slice(0, 9) + '—';
+    return inputString.slice(0, 9) + '-';
   }
   return inputString.slice(0, 10);
 }
@@ -64,7 +64,8 @@ function generateQrCRC(qrData) {
 
 module.exports = {
   generateQr: async function (amount,name,plain) {
-    name = cutString(name)
+    //name = cutString(name)
+    console.log(name)
     let digitIndicator =
       amount >= 1000 ? "7"
       : amount >= 100 ? "6"
