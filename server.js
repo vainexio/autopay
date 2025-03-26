@@ -457,6 +457,7 @@ client.on("interactionCreate", async (inter) => {
         new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji(emojis.offline).setLabel("copy number")
       );
       let qrCode = await generateQr(amount)
+      console.log(qrCode)
       await inter.channel.send({content: content, files: [qrCode.image], components: [comp]})
     }
     else if (id.startsWith("unregisPrompt-")) {
