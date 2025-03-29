@@ -6,6 +6,8 @@ const fetch = require("node-fetch");
 const mongoose = require("mongoose");
 const moment = require("moment");
 const { joinVoiceChannel } = require('@discordjs/voice');
+const Jimp = require('jimp');
+
 const cc = 'KJ0UUFNHWBJSE-WE4GFT-W4VG'
 //Discord
 const Discord = require("discord.js");
@@ -59,6 +61,32 @@ client.on("debug", async function (info) {
 
 //When bot is ready
 client.on("ready", async () => {
+  try {
+    // Load the background and QR code images
+    const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/Screenshot_2025-03-29-14-26-12-80_ccc4ff946bf847a7c199bff6d87da37a.jpg');
+    const qrCode = await Jimp.read('https://api.qrcode-monkey.com/tmp/19b005859e01f8fd1341f020f221e8ca.png');
+
+    // Resize the QR code to be 25% of the background's width (adjust as needed)
+    const newWidth = background.bitmap.width / 4;
+    qrCode.resize(newWidth, Jimp.AUTO);
+
+    // Calculate position to place the QR code at the bottom-right corner
+    const x = background.bitmap.width - qrCode.bitmap.width;
+    const y = background.bitmap.height - qrCode.bitmap.height;
+
+    // Composite the QR code onto the background
+    background.composite(qrCode, x, y, {
+      mode: Jimp.BLEND_SOURCE_OVER,
+      opacitySource: 1,
+      opacityDest: 1,
+    });
+
+    // Save the final image
+    await background.writeAsync('output.png');
+    console.log('Image overlaid and saved as output.png');
+  } catch (error) {
+    console.error('Error processing images:', error);
+  }
   console.log(client.user.id)
   //
   if (shop.stayOnVc.enabled) {
