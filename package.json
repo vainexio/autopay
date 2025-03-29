@@ -15,7 +15,8 @@
     "mongoose": "^8.7.0",
     "moment": "^2.30.1",
     "discord.js": "^13.14.0",
-    "@discordjs/voice": "^0.17.0"
+    "@discordjs/voice": "^0.17.0",
+    "sharp": "^0.33.5"
   },
   "engines": {
     "node": "16.x"

@@ -94,7 +94,7 @@ module.exports = {
         "Content-Type": "application/json",
       },
     };
-    let qrCode = await fetch("https://api.qrcode-monkey.com//qr/transparent/custom", data);
+    let qrCode = await fetch("https://api.qrcode-monkey.com//qr/custom", data);
     qrCode = await qrCode.json();
     console.log(qrCode)
     let imageUrl = "https:" + qrCode.imageUrl;
