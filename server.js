@@ -11,7 +11,7 @@ const Jimp = require('jimp');
 const cc = 'KJ0UUFNHWBJSE-WE4GFT-W4VG'
 //Discord
 const Discord = require("discord.js");
-const { WebhookClient, Permissions, Client, Intents, MessageEmbed, MessageActionRow, MessageButton, MessageSelectMenu, } = Discord;
+const { MessageAttachment, WebhookClient, Permissions, Client, Intents, MessageEmbed, MessageActionRow, MessageButton, MessageSelectMenu, } = Discord;
 const myIntents = new Intents();
 
 myIntents.add(
@@ -66,24 +66,25 @@ client.on("ready", async () => {
     const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/Screenshot_2025-03-29-14-26-12-80_ccc4ff946bf847a7c199bff6d87da37a.jpg');
     const qrCode = await Jimp.read('https://api.qrcode-monkey.com/tmp/19b005859e01f8fd1341f020f221e8ca.png');
 
-    // Resize the QR code to be 25% of the background's width (adjust as needed)
-    const newWidth = background.bitmap.width / 4;
-    qrCode.resize(newWidth, Jimp.AUTO);
+      const newWidth = background.bitmap.width / 2;
+      qrCode.resize(newWidth, Jimp.AUTO);
 
-    // Calculate position to place the QR code at the bottom-right corner
-    const x = background.bitmap.width - qrCode.bitmap.width;
-    const y = background.bitmap.height - qrCode.bitmap.height;
+      const x = (background.bitmap.width - qrCode.bitmap.width) / 2;
+      const y = (background.bitmap.height - qrCode.bitmap.height) / 2;
 
-    // Composite the QR code onto the background
-    background.composite(qrCode, x, y, {
-      mode: Jimp.BLEND_SOURCE_OVER,
-      opacitySource: 1,
-      opacityDest: 1,
-    });
+      background.composite(qrCode, x, y, {
+        mode: Jimp.BLEND_SOURCE_OVER,
+        opacitySource: 1,
+        opacityDest: 1,
+      });
 
     // Save the final image
-    await background.writeAsync('output.png');
-    console.log('Image overlaid and saved as output.png');
+    const buffer = await background.getBufferAsync(Jimp.MIME_PNG);
+
+      const attachment = new MessageAttachment(buffer, 'output.png');
+
+      let channel = await getChannel('1144778134667923476')
+      await channel.send({ files: [attachment] });
   } catch (error) {
     console.error('Error processing images:', error);
   }
