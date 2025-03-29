@@ -465,7 +465,7 @@ client.on("interactionCreate", async (inter) => {
       let qrCode = await generateQr(amount,"For "+inter.user.globalName,true)
       console.log(qrCode)
       try {
-        const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/qrBg.png?v=1743236869150');
+        const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/background.png');
         const qrLink = await Jimp.read(qrCode.image);
 
         const newWidth = background.bitmap.width / 2.7;
@@ -481,8 +481,8 @@ client.on("interactionCreate", async (inter) => {
         });
         
       const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
-      const overlayText = 'PHP '+amount.toFixed(2)+'\n@'+(inter.member.nickname ? inter.member.nickname : inter.user.globalName);
-      const padding = 10;
+      const overlayText = 'PHP '+amount.toFixed(2);
+      const padding = 2;
 
       const textX = x;
       const textY = y + qrLink.bitmap.height + padding;
