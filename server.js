@@ -61,33 +61,6 @@ client.on("debug", async function (info) {
 
 //When bot is ready
 client.on("ready", async () => {
-  try {
-    // Load the background and QR code images
-    const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/Screenshot_2025-03-29-14-26-12-80_ccc4ff946bf847a7c199bff6d87da37a.jpg');
-    const qrCode = await Jimp.read('https://api.qrcode-monkey.com/tmp/19b005859e01f8fd1341f020f221e8ca.png');
-
-      const newWidth = background.bitmap.width / 2;
-      qrCode.resize(newWidth, Jimp.AUTO);
-
-      const x = (background.bitmap.width - qrCode.bitmap.width) / 2;
-      const y = (background.bitmap.height - qrCode.bitmap.height) / 2;
-
-      background.composite(qrCode, x, y, {
-        mode: Jimp.BLEND_SOURCE_OVER,
-        opacitySource: 1,
-        opacityDest: 1,
-      });
-
-    // Save the final image
-    const buffer = await background.getBufferAsync(Jimp.MIME_PNG);
-
-      const attachment = new MessageAttachment(buffer, 'output.png');
-
-      let channel = await getChannel('1144778134667923476')
-      await channel.send({ files: [attachment] });
-  } catch (error) {
-    console.error('Error processing images:', error);
-  }
   console.log(client.user.id)
   //
   if (shop.stayOnVc.enabled) {
@@ -455,7 +428,7 @@ client.on("interactionCreate", async (inter) => {
       let num = normalizeMobileNumber(thread[0].answer)
       
       if (!num) return inter.channel.send({content: emojis.warning+" Invalid phone number: `"+thread[0].answer+"`\nMake sure the format is correct.", components: [row]})
-      
+      await inter.followUp({content: ""})
       // Create phone data
       if (!phone) {
         let phone = new phoneModel(phoneSchema)
@@ -486,10 +459,32 @@ client.on("interactionCreate", async (inter) => {
         new MessageButton().setCustomId('generatePlain-'+amount).setStyle('PRIMARY').setEmoji('<:gcash:1259786703816622121>').setLabel("Plain QR"),
         new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
       );
-      let qrCode = await generateQr(amount,"For "+inter.user.globalName,false)
-      console.log(inter.member)
+      let qrCode = await generateQr(amount,"For "+inter.user.globalName,true)
       console.log(qrCode)
-      await inter.channel.send({content: content, files: [qrCode.image], components: [comp]})
+      try {
+        const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/qrBg.png?v=1743236869150');
+        const qrCode = await Jimp.read(qrCode.image);
+
+        const newWidth = background.bitmap.width / 2.7;
+        qrCode.resize(newWidth, Jimp.AUTO);
+
+        const x = (background.bitmap.width - qrCode.bitmap.width) / 2;
+        const y = (background.bitmap.height - qrCode.bitmap.height) / 2;
+
+        background.composite(qrCode, x, y, {
+          mode: Jimp.BLEND_SOURCE_OVER,
+          opacitySource: 1,
+          opacityDest: 1,
+        });
+
+        const buffer = await background.getBufferAsync(Jimp.MIME_PNG);
+        const attachment = new MessageAttachment(buffer, 'output.png');
+
+        await inter.channel.send.send({content: content, files: [attachment], components: [comp] });
+      } catch (error) {
+        console.error('Error processing images:', error);
+      }
+      //wait inter.channel.send({content: content, files: [qrCode.image], components: [comp]})
     }
     else if (id.startsWith("generatePlain-")) {
       let amount = id.replace('generatePlain-','')
