@@ -454,7 +454,8 @@ client.on("interactionCreate", async (inter) => {
       .replace('{amount}',amount.toString())
       
       let comp = new MessageActionRow().addComponents(
-        new MessageButton().setCustomId('generatePlain-'+amount).setStyle('PRIMARY').setEmoji('<:gcash:1259786703816622121>').setLabel("Show Plain QR")
+        new MessageButton().setCustomId('generatePlain-'+amount).setStyle('PRIMARY').setEmoji('<:gcash:1259786703816622121>').setLabel("plain QR"),
+        new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('PRIMARY').setEmoji('📋').setLabel("copy number")
       );
       let qrCode = await generateQr(amount,"For "+inter.user.globalName,false)
       console.log(inter.member)
