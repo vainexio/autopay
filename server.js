@@ -462,7 +462,7 @@ client.on("interactionCreate", async (inter) => {
         //new MessageButton().setCustomId('generatePlain-'+amount).setStyle('PRIMARY').setEmoji('<:gcash:1259786703816622121>').setLabel("Plain QR"),
         //new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
       );
-      let qrCode = await generateQr(amount,"For "+(inter.member.nickname ? inter.member.nickname : inter.user.globalName),true) //
+      let qrCode = await generateQr(amount,"For "+(inter.user.username),true) //inter.member.nickname ? inter.member.nickname : 
       console.log(qrCode)
       try {
         const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/Logopit_1743258462482.png?v=1743258492151');
