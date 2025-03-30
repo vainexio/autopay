@@ -66,7 +66,7 @@ function generateQrCRC(qrData) {
 
 module.exports = {
   generateQr: async function (amount,name,plain) {
-    name = cutString(name)
+    name = cutString(name.replace('ω',''))
     console.log(name)
     let digitIndicator =
       amount >= 10000 ? "8"
