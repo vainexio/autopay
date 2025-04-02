@@ -237,64 +237,7 @@ let tStocks = 0
 client.on("interactionCreate", async (inter) => {
   if (inter.isCommand()) {
     let cname = inter.commandName
-    //Nitro dropper
-    if (cname === 'drop') {
-      if (!await getPerms(inter.member,4)) return inter.reply({content: emojis.warning+' Insufficient Permission'});
-      let options = inter.options._hoistedOptions
-      if (!yay) return inter.reply({content: emojis.warning+" The bot is currently busy deleting stocks ("+cStocks+"/"+tStocks+")", ephemeral: true})
-      await inter.deferReply();
-      //
-      let user = options.find(a => a.name === 'user')
-      let quan = options.find(a => a.name === 'quantity')
-      let item = options.find(a => a.name === 'item')
-      //Send prompt
-      try {
-        //Get stocks
-        let stocks = item.value === 'nitro boost' ? await getChannel(shop.channels.boostStocks) : item.value === 'nitro basic' ? await getChannel(shop.channels.basicStocks) : null
-        let links = ""
-        let index = ""
-        let msgs = []
-        let messages = await stocks.messages.fetch({limit: quan.value}).then(async messages => {
-          await messages.forEach(async (gotMsg) => {
-            index++
-            links += "\n"+index+". "+gotMsg.content
-            msgs.push(gotMsg)
-          })
-        })
-        //Returns
-        if (links === "") return inter.editReply({content: emojis.x+" No stocks left.", ephemeral: true})
-        if (quan.value > index) return inter.editReply({content: emojis.warning+" Insufficient stocks. **"+index+"** "+item.value+'(s)'+" remaining.", ephemeral: true})
-        yay = false
-        tStocks = quan.value
-        //delete messages
-        for (let i in msgs) {
-          await msgs[i].delete().then(msg => {
-            ++cStocks
-            console.log(cStocks)
-            if (cStocks == tStocks) {
-              cStocks = 0
-              yay = true
-            }
-          });
-        }
-        await addRole(await getMember(user.user.id,inter.guild),["Buyer","Pending"],inter.guild)
-        //Send prompt
-        let drops = await getChannel(shop.channels.drops)
-        let dropMsg
-        await drops.send({content: links}).then(msg => dropMsg = msg)
-        //
-        let row = new MessageActionRow().addComponents(
-          new MessageButton().setCustomId("drop-"+dropMsg.id).setStyle('SECONDARY').setEmoji('📩').setLabel("Drop"),
-          new MessageButton().setCustomId("showDrop-"+dropMsg.id).setStyle('SECONDARY').setEmoji('📋'),
-        );
-        await inter.editReply({content: "<@"+user.user.id+"> Sending **"+quan.value+"** "+item.value+"(s)\n• Make sure to open your DMs.\n• The message may appear as **direct or request** message.", components: [row]})
-        //
-      } catch (err) {
-        console.log(err)
-        await inter.editReply({content: emojis.warning+' Unexpected Error Occurred\n```diff\n- '+err+'```'})
-      }
-    }
-    else if (cname === 'register') {
+    if (cname === 'register') {
       if (!await getPerms(inter.member,2)) return inter.reply({content: emojis.warning+" You are not on the whitelist"});
       let options = inter.options._hoistedOptions
       //
