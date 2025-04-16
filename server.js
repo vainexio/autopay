@@ -217,7 +217,7 @@ client.on("messageCreate", async (message) => {
     let row = new MessageActionRow().addComponents(
       new MessageButton().setCustomId('autopay-'+message.guild.id+"_"+args[1]).setStyle('SUCCESS').setLabel('Yes'),
     );
-    await message.channel.send({content: "** **\n<:gcash:1273091410228150276> Would you like to auto pay with GCash?\n-# GCash may have delays. If the payment was not validated, please send the receipt instead.\n** **", components: [row]})
+    await message.channel.send({content: "** **\n<:QRPH:1362045275459551292> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n** **", components: [row]})
     await message.delete();
   }
   if (message.author.bot) return;
