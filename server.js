@@ -215,7 +215,7 @@ client.on("messageCreate", async (message) => {
   if (message.content.toLowerCase().startsWith('.pay') && message.author.id !== client.user.id) {
     let args = await getArgs(message.content)
     let row = new MessageActionRow().addComponents(
-      new MessageButton().setCustomId('autopay-'+message.guild.id+"_"+args[1]).setStyle('SUCCESS').setLabel('Yes'),
+      new MessageButton().setCustomId('autopay-'+message.guild.id+"_"+args[1]).setStyle('PRIMARY').setLabel('Yes'),
     );
     await message.channel.send({content: "** **\n<:QRPH:1362045275459551292> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n** **", components: [row]})
     await message.delete();
