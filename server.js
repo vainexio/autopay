@@ -408,10 +408,10 @@ client.on("interactionCreate", async (inter) => {
       let qrCode = await generateQr(amount,"For "+(inter.user.username),true) //inter.member.nickname ? inter.member.nickname : 
       console.log(qrCode)
       try {
-        const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/Logopit_1744808813428.png?v=1744808880344');
+        const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/Logopit_1744961109622.png?v=1744961143162');
         const qrLink = await Jimp.read(qrCode.image);
 
-        const newWidth = background.bitmap.width / 2;
+        const newWidth = background.bitmap.width / 1.7;
         qrLink.resize(newWidth, Jimp.AUTO);
 
         const x = (background.bitmap.width - qrLink.bitmap.width) / 2;
