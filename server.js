@@ -215,9 +215,9 @@ client.on("messageCreate", async (message) => {
   if (message.content.toLowerCase().startsWith('.pay') && message.author.id !== client.user.id) {
     let args = await getArgs(message.content)
     let row = new MessageActionRow().addComponents(
-      new MessageButton().setCustomId('autopay-'+message.guild.id+"_"+args[1]).setStyle('PRIMARY').setLabel('Yes'),
+      new MessageButton().setCustomId('autopay-'+message.guild.id+"_"+args[1]).setStyle('PRIMARY').setLabel('Yes, Proceed'),
     );
-    await message.channel.send({content: "** **\n<:QRPH:1362045275459551292> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n\n<a:White_Check_Blancoo:1297256732992737411> **Check availability before paying**\n-# Sending payments for a product not marked as available in https://discord.com/channels/1109020434449575936/1109020435754000423/1361284984618618901 will be refunded with a deduction from our rule's cancellation fee!\n** **", components: [row]})
+    await message.channel.send({content: "** **\n<a:y_catheart:1138704838360830044> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n\n<a:tick:1138709329604784128> **Check availability before paying**\n-# If you pay for a product not marked available [here](https://discord.com/channels/1109020434449575936/1109020435754000423/1361284984618618901), we’ll refund you with a deduction from our cancellation fee!\n** **", components: [row]})
     await message.delete();
   }
   if (message.author.bot) return;
