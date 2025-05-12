@@ -217,7 +217,7 @@ client.on("messageCreate", async (message) => {
     let row = new MessageActionRow().addComponents(
       new MessageButton().setCustomId('autopay-'+message.guild.id+"_"+args[1]).setStyle('PRIMARY').setLabel('Yes'),
     );
-    await message.channel.send({content: "** **\n<:QRPH:1362045275459551292> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n** **", components: [row]})
+    await message.channel.send({content: "** **\n<:QRPH:1362045275459551292> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n\n<a:White_Check_Blancoo:1297256732992737411> **Check availability before paying**\n-# Sending payments for a product not marked as available in https://discord.com/channels/1109020434449575936/1109020435754000423/1361284984618618901 will be refunded with a deduction from our rule's cancellation fee!\n** **", components: [row]})
     await message.delete();
   }
   if (message.author.bot) return;
