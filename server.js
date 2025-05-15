@@ -403,7 +403,7 @@ client.on("interactionCreate", async (inter) => {
       
       let comp = new MessageActionRow().addComponents(
         //new MessageButton().setCustomId('generatePlain-'+amount).setStyle('PRIMARY').setEmoji('<:gcash:1259786703816622121>').setLabel("Plain QR"),
-        //new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
+        new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
       );
       let qrCode = await generateQr(amount,"For "+(inter.user.username),false) //inter.member.nickname ? inter.member.nickname : 
       console.log(qrCode)
@@ -445,7 +445,7 @@ client.on("interactionCreate", async (inter) => {
         const buffer = await background.getBufferAsync(Jimp.MIME_PNG);
         const attachment = new MessageAttachment(buffer, 'output.png');
 
-        await inter.channel.send({content: content, files: [attachment]});
+        await inter.channel.send({content: content, files: [attachment], components: [comp]});
       } catch (error) {
         console.error('Error processing images:', error);
       }
