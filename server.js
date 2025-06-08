@@ -361,10 +361,11 @@ client.on("interactionCreate", async (inter) => {
         msg = msg?.first()
         if (msg.content.toLowerCase().includes('ok')) {
           thread[0].answer = phone.number
-          await msg.react(emojis.loading)
         }
         else thread[0].answer = msg.content
+        await msg.react(emojis.loading)
       }
+      
       
       for (let i in thread) {
         let data = thread[i]
