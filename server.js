@@ -399,7 +399,6 @@ client.on("interactionCreate", async (inter) => {
       let content = foundMsg.content
       .replace('{myGcash}',serverData.myGcash.number)
       .replace('{initials}',serverData.myGcash.initials)
-      .replace('{num}',num)
       .replace('{amount}',amount.toString())
       
       let comp = new MessageActionRow().addComponents(
