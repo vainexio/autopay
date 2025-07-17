@@ -315,7 +315,7 @@ client.on("interactionCreate", async (inter) => {
       if (!serverData) return await inter.reply({content: emojis.warning+" No server data."})
       await inter.update({components: []})
       
-      let row = new MessageActionRow().addComponents(
+      /*let row = new MessageActionRow().addComponents(
         new MessageButton().setCustomId('autopay-'+inter.guild.id+"_"+amount).setStyle('SECONDARY').setLabel('Retry'),
       );
       
@@ -391,7 +391,7 @@ client.on("interactionCreate", async (inter) => {
       // Insert shop data
       let foundShopData = shop.expected.find(i => i.channel == inter.channel.id)
       if (!foundShopData) shop.expected.push({channel: inter.channel.id, num: num, myGcash: serverData.myGcash.number, amount: amount})
-      else if (foundShopData) foundShopData.num = num
+      else if (foundShopData) foundShopData.num = num*/
       
       let templates = await getChannel(shop.channels.templates)
       let foundMsg = await templates.messages.fetch('1320650204046688257')
@@ -406,7 +406,7 @@ client.on("interactionCreate", async (inter) => {
         //new MessageButton().setCustomId('generatePlain-'+amount).setStyle('PRIMARY').setEmoji('<:gcash:1259786703816622121>').setLabel("Plain QR"),
         new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
       );
-      let qrCode = await generateQr(amount,"For "+(inter.user.username),false) //inter.member.nickname ? inter.member.nickname : 
+      let qrCode = await generateQr(amount,"For "+(inter.user.username),false)
       console.log(qrCode)
       try {
         const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584');
