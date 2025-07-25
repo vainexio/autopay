@@ -69,14 +69,14 @@ module.exports = {
     name = cutString(name.replace('ω',''))
     console.log(name)
     let digitIndicator =
-      amount >= 10000 ? "408"
-      : amount >= 1000 ? "407"
-      : amount >= 100 ? "406"
-      : amount >= 10 ? "405"
-      : amount >= 1 ? "404"
+      amount >= 10000 ? "5408"
+      : amount >= 1000 ? "5407"
+      : amount >= 100 ? "5406"
+      : amount >= 10 ? "5405"
+      : amount >= 1 ? "5404"
       : "Unknown";
     let initial = "01021" + (amount > 0 ? "2" : "1")
-    let qrData = "000201"+initial+"27780012com.p2pqrpay0111PAPHPHM1XXX02089996440304126394532635490515+63-945-32635495204601653036085"+(Number(amount) > 0 ? digitIndicator + Number(amount).toFixed(2) : "")+"5802PH59"+formatNumber(name.length)+name+"6015Sto. Tomas City6304"
+    let qrData = "000201"+initial+"27780012com.p2pqrpay0111PAPHPHM1XXX02089996440304126394532635490515+63-945-3263549520460165303608"+(Number(amount) > 0 ? digitIndicator + Number(amount).toFixed(2) : "")+"5802PH59"+formatNumber(name.length)+name+"6015Sto. Tomas City6304"
     let qrData2 = "000201"+initial+"27830012com.p2pqrpay0111GXCHPHM2XXX02089996440303152170200000006560417DWQM4TK3JDO7SRDOU5204601653036085"+digitIndicator+amount.toFixed(2)+"5802PH59"+formatNumber(name.length)+name+"6011San Antonio610412346304";
     let generatedQr = generateQrCRC(qrData);
     let dynamicDesign = {"body":"circular","eye":"frame1","eyeBall":"ball0","erf1":["fh"],"erf2":[],"erf3":["fh","fv"],"brf1":[],"brf2":[],"brf3":[],"bodyColor":"#382600","bgColor":"#FFFFFF","eye1Color":"#382600","eye2Color":"#382600","eye3Color":"#382600","eyeBall1Color":"#382600","eyeBall2Color":"#382600","eyeBall3Color":"#382600","gradientColor1":"","gradientColor2":"","gradientType":"linear","gradientOnEyes":"true","logo":"","logoMode":"default"}
