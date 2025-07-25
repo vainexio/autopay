@@ -309,7 +309,6 @@ client.on("interactionCreate", async (inter) => {
     let id = inter.customId;
     if (id.startsWith('pay-')) {
       let data = await getArgs(id.replace('pay-','').replace(/_/g,' '))
-      let serverId = data[0]
       let amount = Number(data[1])
       let platform = data[2]
       if (isNaN(amount)) return inter.reply({content: emojis.warning+" Invalid amount."})
@@ -330,7 +329,7 @@ client.on("interactionCreate", async (inter) => {
       let comp = new MessageActionRow().addComponents(
         new MessageButton().setCustomId('reply-'+number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
       );
-      let qrCode = await generateQr(amount,"For "+(inter.user.username),false)
+      let qrCode = await generateQr(amount,"For "+(inter.user.username),false,platform)
       console.log(qrCode)
       try {
         const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584');
