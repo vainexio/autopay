@@ -320,7 +320,7 @@ client.on("interactionCreate", async (inter) => {
       let foundMsg = await templates.messages.fetch('1320650204046688257')
       
       let number = platform == "gcash" ? "09524414983" : platform == "maya" ? "09453263549" : "Unknown Number"
-      let initials = platform == "gcash" ? " I. P. I." : platform == "maya" ? "Maya" : "Unknown Number"
+      let initials = platform == "gcash" ? "I. P. I." : platform == "maya" ? "Maya" : "Unknown Number"
       let content = foundMsg.content
       .replace('{number}',number)
       .replace('{initials}',initials)
