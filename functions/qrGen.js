@@ -78,7 +78,7 @@ module.exports = {
     let initial = "01021" + (amount > 0 ? "2" : "1")
     let qrData
     let maya = "000201"+initial+"27780012com.p2pqrpay0111PAPHPHM1XXX02089996440304126394532635490515+63-945-3263549520460165303608"+(Number(amount) > 0 ? digitIndicator + Number(amount).toFixed(2) : "")+"5802PH59"+formatNumber(name.length)+name+"6015Sto. Tomas City6304"
-    let gcash = "000201"+initial+"27830012com.p2pqrpay0111GXCHPHM2XXX02089996440303152170200000006560417DWQM4TK3JDO7SRDOU5204601653036085"+digitIndicator+amount.toFixed(2)+"5802PH59"+formatNumber(name.length)+name+"6011San Antonio610412346304";
+    let gcash = "000201"+initial+"27830012com.p2pqrpay0111GXCHPHM2XXX02089996440303152170200000006560417DWQM4TK3JDO7SRDOU520460165303608"+(Number(amount) > 0 ? digitIndicator + Number(amount).toFixed(2) : "")+"5802PH59"+formatNumber(name.length)+name+"6011San Antonio610412346304";
     platform == "gcash" ? qrData = gcash :
     platform == "maya" ? qrData = maya : null
     let generatedQr = generateQrCRC(qrData);
