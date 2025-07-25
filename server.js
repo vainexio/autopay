@@ -214,8 +214,10 @@ client.on("messageCreate", async (message) => {
   if (message.channel.type === "DM") return;
   if (message.content.toLowerCase().startsWith('.pay') && message.author.id !== client.user.id) {
     let args = await getArgs(message.content)
+    let amount = !args[1] ? "0" : args[1]
     let row = new MessageActionRow().addComponents(
-      new MessageButton().setCustomId('autopay-'+message.guild.id+"_"+args[1]).setStyle('PRIMARY').setLabel('Yes, Proceed'),
+      new MessageButton().setCustomId('pay-'+message.guild.id+"_"+amount+"_gcash").setStyle('PRIMARY').setLabel('GCash'),
+      new MessageButton().setCustomId('pay-'+message.guild.id+"_"+amount+"_maya").setStyle('SUCCESS').setLabel('Maya'),
     );
     await message.channel.send({content: "** **\n<a:y_catheart:1138704838360830044> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n\n<a:tick:1138709329604784128> **Check availability before paying**\n-# If you pay for a product not marked available [here](https://discord.com/channels/1109020434449575936/1109020435754000423/1361284984618618901), we’ll refund you with a deduction from our cancellation fee!\n** **", components: [row]})
     await message.delete();
@@ -305,105 +307,28 @@ client.on("interactionCreate", async (inter) => {
   }
   else if (inter.isButton() || inter.isSelectMenu()) {
     let id = inter.customId;
-    if (id.startsWith('autopay-')) {
-      let data = await getArgs(id.replace('autopay-','').replace(/_/g,' '))
+    if (id.startsWith('pay-')) {
+      let data = await getArgs(id.replace('pay-','').replace(/_/g,' '))
       let serverId = data[0]
       let amount = Number(data[1])
+      let platform = data[2]
       if (isNaN(amount)) return inter.reply({content: emojis.warning+" Invalid amount."})
       
-      let serverData = await serverModel.findOne({id: serverId})
-      if (!serverData) return await inter.reply({content: emojis.warning+" No server data."})
       await inter.update({components: []})
-      
-      /*let row = new MessageActionRow().addComponents(
-        new MessageButton().setCustomId('autopay-'+inter.guild.id+"_"+amount).setStyle('SECONDARY').setLabel('Retry'),
-      );
-      
-      // Normalize number
-      function normalizeMobileNumber(input) {
-        let cleaned = input.replace(/\D/g, '');
-        if (cleaned.startsWith('639')) cleaned = '0' + cleaned.slice(2);
-        
-        if (cleaned.length === 11 && cleaned.startsWith('09')) return cleaned
-        else {
-          return false;
-        }
-      }
-      
-      // Create thread
-      let thread = [ { question: "Type the phone number you're going to use in sending payment.\n-# Correct format: 09XXXXXXXXX", answer: '', }, ]
-      const filter = m => m.author.id === inter.user.id;
-      
-      //Get response
-      async function getResponse(data) {
-        try {
-          await inter.channel.send(data.question);
-          let msg = await inter.channel.awaitMessages({ 
-            filter, 
-            max: 1, 
-            time: 900000, // 15 minutes
-            errors: ['time'] 
-          });
-
-          msg = msg?.first();
-          data.answer = msg.content;
-        } catch (error) {
-          // Handle timeout error
-          await inter.channel.send({content: `${emojis.warning} No message was collected. The interaction expired.`,components: [row]});
-        }
-      }
-      
-      let phone = await phoneModel.findOne({userId: inter.user.id})
-      if (phone) {
-        await inter.channel.send({content: emojis.check+" I remembered your SIM number. `"+phone.number+"`\n\nSay **OK** if you want to use this. If not, send your new phone number."})
-        let msg = await inter.channel.awaitMessages({ filter, max: 1,time: 900000 ,errors: ['time'] })
-        
-        msg = msg?.first()
-        if (msg.content.toLowerCase().includes('ok')) {
-          thread[0].answer = phone.number
-        }
-        else thread[0].answer = msg.content
-        await msg.react(emojis.loading)
-      }
-      
-      
-      for (let i in thread) {
-        let data = thread[i]
-        if (data.answer == "") await getResponse(data)
-      }
-      
-      let num = normalizeMobileNumber(thread[0].answer)
-      
-      if (!num) return inter.channel.send({content: emojis.warning+" Invalid phone number: `"+thread[0].answer+"`\nMake sure the format is correct.", components: [row]})
-      //await inter.followUp({content: emojis.loading+" Generating QR",ephemeral: true})
-      // Create phone data
-      if (!phone) {
-        let phone = new phoneModel(phoneSchema)
-        phone.userId = inter.user.id
-        phone.number = num
-        await phone.save()
-      }
-      // Update existing data
-      else if (phone) {
-        phone.number = num
-        await phone.save()
-      }
-      // Insert shop data
-      let foundShopData = shop.expected.find(i => i.channel == inter.channel.id)
-      if (!foundShopData) shop.expected.push({channel: inter.channel.id, num: num, myGcash: serverData.myGcash.number, amount: amount})
-      else if (foundShopData) foundShopData.num = num*/
+      await inter.message.react(emojis.loading)
       
       let templates = await getChannel(shop.channels.templates)
       let foundMsg = await templates.messages.fetch('1320650204046688257')
       
+      let number = platform == "gcash" ? "09524414983" : platform == "maya" ? "09453263549" : "Unknown Number"
+      let initials = platform == "gcash" ? " I. P. I." : platform == "maya" ? "Maya" : "Unknown Number"
       let content = foundMsg.content
-      .replace('{myGcash}',serverData.myGcash.number)
-      .replace('{initials}',serverData.myGcash.initials)
-      .replace('{amount}',amount.toString())
+      .replace('{number}',number)
+      .replace('{initials}',initials)
+      .replace('{amount}',amount > 0 ? amount.toString() : "Any amount")
       
       let comp = new MessageActionRow().addComponents(
-        //new MessageButton().setCustomId('generatePlain-'+amount).setStyle('PRIMARY').setEmoji('<:gcash:1259786703816622121>').setLabel("Plain QR"),
-        new MessageButton().setCustomId('reply-'+serverData.myGcash.number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
+        new MessageButton().setCustomId('reply-'+number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
       );
       let qrCode = await generateQr(amount,"For "+(inter.user.username),false)
       console.log(qrCode)
