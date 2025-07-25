@@ -75,7 +75,7 @@ module.exports = {
       : amount >= 10 ? "405"
       : amount >= 1 ? "404"
       : "Unknown";
-    let qrData = "00020101021227780012com.p2pqrpay0111PAPHPHM1XXX02089996440304126394532635490515+63-945-32635495204601653036085"+(!amount || amount <= 0 ? "" : digitIndicator+amount.toFixed(2))+"5802PH59"+formatNumber(name.length)+name+"6015Sto. Tomas City6304"
+    let qrData = "00020101021227780012com.p2pqrpay0111PAPHPHM1XXX02089996440304126394532635490515+63-945-32635495204601653036085"+(Number(amount) > 0 ? digitIndicator + Number(amount).toFixed(2) : "")+"5802PH59"+formatNumber(name.length)+name+"6015Sto. Tomas City6304"
     let qrData2 = "00020101021227830012com.p2pqrpay0111GXCHPHM2XXX02089996440303152170200000006560417DWQM4TK3JDO7SRDOU5204601653036085"+digitIndicator+amount.toFixed(2)+"5802PH59"+formatNumber(name.length)+name+"6011San Antonio610412346304";
     let generatedQr = generateQrCRC(qrData);
     let dynamicDesign = {"body":"circular","eye":"frame1","eyeBall":"ball0","erf1":["fh"],"erf2":[],"erf3":["fh","fv"],"brf1":[],"brf2":[],"brf3":[],"bodyColor":"#382600","bgColor":"#FFFFFF","eye1Color":"#382600","eye2Color":"#382600","eye3Color":"#382600","eyeBall1Color":"#382600","eyeBall2Color":"#382600","eyeBall3Color":"#382600","gradientColor1":"","gradientColor2":"","gradientType":"linear","gradientOnEyes":"true","logo":"","logoMode":"default"}
