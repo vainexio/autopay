@@ -424,7 +424,7 @@ client.on("interactionCreate", async (inter) => {
         });
         
       const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
-      const overlayText = amount.toFixed(2);
+      const overlayText = amount > 0 ? amount.toFixed(2) : "Any amount";
       const padding = 2;
 
       const textX = x;
