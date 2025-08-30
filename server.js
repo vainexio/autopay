@@ -217,7 +217,7 @@ client.on("messageCreate", async (message) => {
     let amount = !args[1] ? "0" : args[1]
     let row = new MessageActionRow().addComponents(
       new MessageButton().setCustomId('pay-'+message.guild.id+"_"+amount+"_gcash").setStyle('PRIMARY').setLabel('GCash'),
-      new MessageButton().setCustomId('pay-'+message.guild.id+"_"+amount+"_maya").setStyle('SUCCESS').setLabel('Maya'),
+      //new MessageButton().setCustomId('pay-'+message.guild.id+"_"+amount+"_maya").setStyle('SUCCESS').setLabel('Maya'),
     );
     await message.channel.send({content: "** **\n<a:y_catheart:1138704838360830044> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n\n<a:tick:1138709329604784128> **Check availability before paying**\n-# If you pay for a product not marked available [here](https://discord.com/channels/1109020434449575936/1109020435754000423/1361284984618618901), we’ll refund you with a deduction from our cancellation fee!\n** **", components: [row]})
     await message.delete();
