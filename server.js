@@ -335,7 +335,7 @@ client.on("interactionCreate", async (inter) => {
         const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584');
         const qrLink = await Jimp.read(qrCode.image);
 
-        const newWidth = background.bitmap.width / 1.7;
+        const newWidth = background.bitmap.width / 1.5;
         qrLink.resize(newWidth, Jimp.AUTO);
 
         const x = (background.bitmap.width - qrLink.bitmap.width) / 2;
@@ -347,7 +347,7 @@ client.on("interactionCreate", async (inter) => {
           opacityDest: 1,
         });
         
-      const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
+      const font = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK);
       const overlayText = amount > 0 ? amount.toFixed(2) : "Any amount";
       const padding = 2;
 
