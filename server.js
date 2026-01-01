@@ -339,7 +339,7 @@ client.on("interactionCreate", async (inter) => {
         qrLink.resize(newWidth, Jimp.AUTO);
 
         const x = (background.bitmap.width - qrLink.bitmap.width) / 2;
-        const y = (background.bitmap.height - qrLink.bitmap.height) / 2;
+        const y = ((background.bitmap.height - qrLink.bitmap.height) / 2) - 10;
 
         background.composite(qrLink, x, y, {
           mode: Jimp.BLEND_SOURCE_OVER,
