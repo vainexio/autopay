@@ -335,7 +335,7 @@ client.on("interactionCreate", async (inter) => {
         const background = await Jimp.read('https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584');
         const qrLink = await Jimp.read(qrCode.image);
 
-        const newWidth = background.bitmap.width / 2.1;
+        const newWidth = background.bitmap.width / 1.9;
         qrLink.resize(newWidth, Jimp.AUTO);
 
         const x = (background.bitmap.width - qrLink.bitmap.width) / 2;
