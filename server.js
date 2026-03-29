@@ -222,6 +222,16 @@ client.on("messageCreate", async (message) => {
     await message.channel.send({content: "** **\n<a:y_catheart:1138704838360830044> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n\n<a:tick:1138709329604784128> **Check availability before paying**\n-# If you pay for a product not marked available [here](https://discord.com/channels/1109020434449575936/1109020435754000423/1361284984618618901), we’ll refund you with a deduction from our cancellation fee!\n** **", components: [row]})
     await message.delete();
   }
+  if (message.content.toLowerCase().startsWith('.gcash') && message.author.id !== client.user.id) {
+    let args = await getArgs(message.content)
+    let amount = !args[1] ? "0" : args[1]
+    let row = new MessageActionRow().addComponents(
+      new MessageButton().setCustomId('pay2-'+message.guild.id+"_"+amount+"_gcash").setStyle('PRIMARY').setLabel('GCash'),
+      //new MessageButton().setCustomId('pay-'+message.guild.id+"_"+amount+"_maya").setStyle('SUCCESS').setLabel('Maya'),
+    );
+    await message.channel.send({content: "** **\n<a:y_catheart:1138704838360830044> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n\n<a:tick:1138709329604784128> **Check availability before paying**\n-# If you pay for a product not marked available [here](https://discord.com/channels/1109020434449575936/1109020435754000423/1361284984618618901), we’ll refund you with a deduction from our cancellation fee!\n** **", components: [row]})
+    await message.delete();
+  }
   if (message.author.bot) return;
   //Checker
   if (message.content.length > 0 && message.content.toLowerCase().startsWith('.add')) {
@@ -333,6 +343,74 @@ client.on("interactionCreate", async (inter) => {
       console.log(qrCode)
       try {
         const background = await Jimp.read('https://i.imgur.com/FzwslaE.png'); //https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584
+        const qrLink = await Jimp.read(qrCode.image);
+
+        const newWidth = background.bitmap.width / 1.8;
+        qrLink.resize(newWidth, Jimp.AUTO);
+
+        const x = (background.bitmap.width - qrLink.bitmap.width) / 2;
+        const y = ((background.bitmap.height - qrLink.bitmap.height) / 2) - 20;
+
+        background.composite(qrLink, x, y, {
+          mode: Jimp.BLEND_SOURCE_OVER,
+          opacitySource: 1,
+          opacityDest: 1,
+        });
+        
+      const font = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK);
+      const overlayText = amount > 0 ? amount.toFixed(2) : "Any amount";
+      const padding = 2;
+
+      const textX = x;
+      const textY = y + qrLink.bitmap.height + padding;
+      
+      background.print(
+        font,
+        textX,
+        textY,
+        {
+          text: overlayText,
+          alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
+        },
+        qrLink.bitmap.width,
+        background.bitmap.height - textY
+      );
+
+        const buffer = await background.getBufferAsync(Jimp.MIME_PNG);
+        const attachment = new MessageAttachment(buffer, 'output.png');
+
+        await inter.channel.send({content: content, files: [attachment], components: [comp]});
+      } catch (error) {
+        console.error('Error processing images:', error);
+      }
+      //wait inter.channel.send({content: content, files: [qrCode.image], components: [comp]})
+    }
+    else if (id.startsWith('pay2-')) {
+      let data = await getArgs(id.replace('pay-','').replace(/_/g,' '))
+      let amount = Number(data[1])
+      let platform = data[2]
+      if (isNaN(amount)) return inter.reply({content: emojis.warning+" Invalid amount."})
+      
+      await inter.update({components: []})
+      await inter.message.react(emojis.loading)
+      
+      let templates = await getChannel(shop.channels.templates)
+      let foundMsg = await templates.messages.fetch('1320650204046688257')
+      
+      let number = platform == "gcash" ? "09524414983" : platform == "maya" ? "09453263549" : "Unknown Number"
+      let initials = platform == "gcash" ? "I. P. I." : platform == "maya" ? "Maya" : "Unknown Number"
+      let content = foundMsg.content
+      .replace('{number}',number)
+      .replace('{initials}',initials)
+      .replace('{amount}',amount > 0 ? amount.toString() : "Any amount")
+      
+      let comp = new MessageActionRow().addComponents(
+        new MessageButton().setCustomId('reply-'+number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
+      );
+      let qrCode = await generateQr(amount,"For "+(inter.user.username),false,platform)
+      console.log(qrCode)
+      try {
+        const background = await Jimp.read('https://imgur.com/undefined'); //https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584
         const qrLink = await Jimp.read(qrCode.image);
 
         const newWidth = background.bitmap.width / 1.8;
