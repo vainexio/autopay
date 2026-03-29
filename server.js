@@ -229,7 +229,7 @@ client.on("messageCreate", async (message) => {
       new MessageButton().setCustomId('pay2-'+message.guild.id+"_"+amount+"_gcash").setStyle('PRIMARY').setLabel('GCash'),
       //new MessageButton().setCustomId('pay-'+message.guild.id+"_"+amount+"_maya").setStyle('SUCCESS').setLabel('Maya'),
     );
-    await message.channel.send({content: "** **\n<a:y_catheart:1138704838360830044> Would you like to proceed to payment?\n-# If the payment was not validated, please send the receipt instead.\n\n<a:tick:1138709329604784128> **Check availability before paying**\n-# If you pay for a product not marked available [here](https://discord.com/channels/1109020434449575936/1109020435754000423/1361284984618618901), we’ll refund you with a deduction from our cancellation fee!\n** **", components: [row]})
+    await message.channel.send({content: "** **\n<a:tick:1138709329604784128> Would you like to proceed to payment?\n-# Please send the receipt after sending the payment", components: [row]})
     await message.delete();
   }
   if (message.author.bot) return;
@@ -395,7 +395,7 @@ client.on("interactionCreate", async (inter) => {
       await inter.message.react(emojis.loading)
       
       let templates = await getChannel(shop.channels.templates)
-      let foundMsg = await templates.messages.fetch('1320650204046688257')
+      let foundMsg = await templates.messages.fetch('1487654787787915374')
       
       let number = platform == "gcash" ? "09524414983" : platform == "maya" ? "09453263549" : "Unknown Number"
       let initials = platform == "gcash" ? "I. P. I." : platform == "maya" ? "Maya" : "Unknown Number"
@@ -410,7 +410,7 @@ client.on("interactionCreate", async (inter) => {
       let qrCode = await generateQr(amount,"For "+(inter.user.username),false,platform)
       console.log(qrCode)
       try {
-        const background = await Jimp.read('https://imgur.com/undefined'); //https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584
+        const background = await Jimp.read('https://i.imgur.com/UkEhXEN.png'); //https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584
         const qrLink = await Jimp.read(qrCode.image);
 
         const newWidth = background.bitmap.width / 1.8;
