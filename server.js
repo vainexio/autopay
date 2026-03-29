@@ -229,7 +229,7 @@ client.on("messageCreate", async (message) => {
       new MessageButton().setCustomId('pay2-'+message.guild.id+"_"+amount+"_gcash").setStyle('PRIMARY').setLabel('GCash'),
       //new MessageButton().setCustomId('pay-'+message.guild.id+"_"+amount+"_maya").setStyle('SUCCESS').setLabel('Maya'),
     );
-    await message.channel.send({content: "** **\n<a:tick:1138709329604784128> Would you like to proceed to payment?\n-# Please send the receipt after sending the payment", components: [row]})
+    await message.channel.send({content: "** **\n<a:tick:1138709329604784128> Would you like to proceed to payment?\n-# Please send the receipt after sending the payment\n** **", components: [row]})
     await message.delete();
   }
   if (message.author.bot) return;
