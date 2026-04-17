@@ -447,7 +447,7 @@ client.on("interactionCreate", async (inter) => {
         const buffer = await background.getBufferAsync(Jimp.MIME_PNG);
         const attachment = new MessageAttachment(buffer, 'output.png');
 
-        await inter.channel.send({content: content, files: [attachment], components: [comp]});
+        await inter.channel.send({content: content, files: [attachment]}); //, components: [comp]
       } catch (error) {
         console.error('Error processing images:', error);
       }
