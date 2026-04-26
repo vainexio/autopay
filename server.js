@@ -339,7 +339,7 @@ client.on("interactionCreate", async (inter) => {
       let comp = new MessageActionRow().addComponents(
         new MessageButton().setCustomId('reply-'+number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
       );
-      let qrCode = await generateQr(amount,"For "+(inter.user.username),false,platform)
+      let qrCode = await generateQr(amount,"For "+(inter.user.username),false,"iphone_gcash")
       console.log(qrCode)
       try {
         const background = await Jimp.read('https://i.imgur.com/FzwslaE.png'); //https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584
@@ -407,7 +407,7 @@ client.on("interactionCreate", async (inter) => {
       let comp = new MessageActionRow().addComponents(
         new MessageButton().setCustomId('reply-'+number).setStyle('SECONDARY').setEmoji('📋').setLabel("Copy Number")
       );
-      let qrCode = await generateQr(amount,"For "+(inter.user.username),true,platform)
+      let qrCode = await generateQr(amount,"For "+(inter.user.username),true,"oppo_gcash")
       console.log(qrCode)
       try {
         const background = await Jimp.read('https://i.imgur.com/UkEhXEN.png'); //https://cdn.glitch.global/ef5aba0e-2698-4d9a-9dfb-7c60e08418a2/SLOOPIE_BG.png?v=1745205397584
