@@ -397,7 +397,7 @@ client.on("interactionCreate", async (inter) => {
       let templates = await getChannel(shop.channels.templates)
       let foundMsg = await templates.messages.fetch('1487654787787915374')
       
-      let number = platform == "gcash" ? "09524414983" : platform == "maya" ? "09453263549" : "Unknown Number"
+      let number = platform == "gcash" ? "09940645043" : platform == "maya" ? "09453263549" : "Unknown Number"
       let initials = platform == "gcash" ? "I. P. I." : platform == "maya" ? "Maya" : "Unknown Number"
       let content = foundMsg.content
       .replace('{number}',number)
